@@ -1,0 +1,40 @@
+body {
+  font-family: "Hiragino Sans", sans-serif;
+  padding: 20px;
+  background: #f9f9f9;
+}
+
+h1 {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
+input, select, button {
+  margin: 5px 0;
+  padding: 5px;
+  font-size: 1em;
+}
+
+button {
+  cursor: pointer;
+}
+
+.record {
+  margin-top: 20px;
+}
+
+.record ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.record li {
+  margin-bottom: 6px;
+}
+
+.record button {
+  margin-left: 10px;
+  background: #ffcccc;
+  border: none;
+  padding: 4px 8px;
+}

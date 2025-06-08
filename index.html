@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>活動記録タイマー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>活動記録タイマー</h1>
+
+  <!-- 活動選択・追加フォーム -->
+  <label>活動を選択：
+    <select id="activitySelect"></select>
+  </label>
+  <br />
+  <input type="text" id="newActivity" placeholder="新しい活動名を入力" />
+  <button onclick="addActivity()">追加</button>
+
+  <hr />
+
+  <!-- タイマー操作 -->
+  <button onclick="startTimer()">スタート</button>
+  <button onclick="stopTimer()">ストップ</button>
+
+  <!-- 時間表示 -->
+  <div id="timeDisplay"></div>
+
+  <!-- 記録保存ボタン -->
+  <button id="saveBtn" onclick="confirmSave()" disabled>記録を保存</button>
+
+  <!-- 記録一覧 -->
+  <div class="record">
+    <h2>記録一覧</h2>
+    <ul id="recordList"></ul>
+  </div>
+
+  <!-- スクリプト読み込み -->
+  <script src="main.js"></script>
+</body>
+</html>
