@@ -1,23 +1,29 @@
 // ================================
-// 活動記録タイマー - ロジック編（改良版）
+// 活動記録タイマー - ロジック編（仕様変更対応版）
 // ================================
 
-// タイマー用変数
-let startTime;             // 計測開始時刻（ミリ秒）
-let elapsedTime = 0;       // 経過時間（ミリ秒）
+let startTime; // タイマーの開始時刻
+let elapsedTime = 0; // 経過時間（ms）
+let resumedTime = 0; // 再開時の累積時間
+let currentActivity = null; // 現在選択されている活動
+let currentPageId = "homePage"; // 現在表示されているページID
 
-// ページが読み込まれたときの初期化処理
+// ページ読み込み時の初期化処理
 window.onload = () => {
-  loadActivities();  // 活動リストを表示
-  loadRecords();     // 記録一覧を表示
+  loadActivities(); // 活動一覧の読み込み
 };
 
-console.log("JS読み込まれてるよ");
+// ========== ページ切り替え ==========
+function showPage(id) {
+  // すべてのページを非表示にし、指定ページのみ表示
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  currentPageId = id;
+}
 
-// ========== ユーティリティ関数 ==========
-
-// localStorageから安全にrecords配列を取得
+// ========== ユーティリティ ==========
 function getRecordArray() {
+  // localStorageから記録データを取得し、配列として返す
   const raw = localStorage.getItem('records');
   try {
     const parsed = JSON.parse(raw);
@@ -27,119 +33,157 @@ function getRecordArray() {
   }
 }
 
-// ========== 活動リストの管理 ==========
-
-// 登録済みの活動をプルダウンに表示
+// ========== 活動管理 ==========
 function loadActivities() {
+  // 活動リストとセレクトボックスを再描画
+  const list = document.getElementById('activityList');
   const select = document.getElementById('activitySelect');
   const activities = JSON.parse(localStorage.getItem('activities')) || [];
 
-  select.innerHTML = ''; // 一旦リセット
+  if (list) list.innerHTML = '';
+  if (select) select.innerHTML = '';
 
-  // 活動名ごとに<option>を追加
   activities.forEach(activity => {
+    // セレクトボックスに追加
     const option = document.createElement('option');
     option.value = activity;
     option.textContent = activity;
-    select.appendChild(option);
+    if (select) select.appendChild(option);
+
+    // 活動リストに追加し、クリックでタイマー画面へ遷移
+    if (list) {
+      const li = document.createElement('li');
+      li.textContent = activity;
+      li.onclick = () => {
+        currentActivity = activity;
+        showPage('timerPage');
+        showTopTimes(activity); // 上位タイムを表示
+      };
+      list.appendChild(li);
+    }
   });
 }
 
-// 新しい活動を追加（重複チェックあり）
 function addActivity() {
+  // 新規活動を登録
   const input = document.getElementById('newActivity');
   const name = input.value.trim();
   if (!name) return;
 
   const activities = JSON.parse(localStorage.getItem('activities')) || [];
-
   if (!activities.includes(name)) {
     activities.push(name);
     localStorage.setItem('activities', JSON.stringify(activities));
-    loadActivities(); // 画面更新
+    loadActivities();
   }
-
-  input.value = ''; // 入力欄クリア
+  input.value = '';
 }
 
-// ========== タイマー関連 ==========
-
-// タイマースタート（開始時刻を記録）
+// ========== タイマー ==========
 function startTimer() {
-  startTime = Date.now();  // 現在時刻を記録
+  // タイマー開始
+  startTime = Date.now();
   document.getElementById('saveBtn').disabled = true;
+  document.getElementById('resumeBtn').disabled = true;
   document.getElementById('timeDisplay').textContent = '計測中...';
 }
 
-// タイマーストップ（終了時刻と経過時間を表示）
 function stopTimer() {
+  // タイマー停止、経過時間を計算
   if (!startTime) return;
-
-  const endTime = Date.now();
-  elapsedTime = endTime - startTime;
-
+  elapsedTime += Date.now() - startTime;
+  startTime = null;
   const seconds = (elapsedTime / 1000).toFixed(1);
   document.getElementById('timeDisplay').textContent = `記録時間：${seconds} 秒`;
-
   document.getElementById('saveBtn').disabled = false;
+  document.getElementById('resumeBtn').disabled = false;
 }
 
-// ========== 記録の保存と表示 ==========
+function resumeTimer() {
+  // タイマー再開
+  startTime = Date.now();
+  document.getElementById('timeDisplay').textContent = '再開中...';
+  document.getElementById('saveBtn').disabled = true;
+  document.getElementById('resumeBtn').disabled = true;
+}
 
-// 保存前に確認ダイアログを出す
 function confirmSave() {
+  // 保存確認ダイアログ
   const confirmResult = confirm("この記録を保存しますか？");
   if (confirmResult) {
     saveRecord();
   }
 }
 
-// 記録を保存（localStorageに追記）
 function saveRecord() {
-  const activity = document.getElementById('activitySelect').value;
-  const date = new Date().toLocaleString();  // 日付・時刻
-  const seconds = (elapsedTime / 1000).toFixed(1); // 秒に変換
+  // 記録を保存
+  const date = new Date().toLocaleString();
+  const seconds = (elapsedTime / 1000).toFixed(1);
 
-  const records = getRecordArray(); // 安全に配列取得
-  records.push({ activity, time: seconds, date }); // 新しい記録を追加
-  localStorage.setItem('records', JSON.stringify(records)); // 保存
-
-  loadRecords(); // 表示更新
+  const records = getRecordArray();
+  records.push({ activity: currentActivity, time: seconds, date });
+  localStorage.setItem('records', JSON.stringify(records));
 
   // タイマーリセット
+  elapsedTime = 0;
   document.getElementById('saveBtn').disabled = true;
+  document.getElementById('resumeBtn').disabled = true;
   document.getElementById('timeDisplay').textContent = '';
-  startTime = null;
+
+  showActivityRecords(currentActivity, true); // 保存後に記録表示ページへ
 }
 
-// 記録の一覧を画面に表示
-function loadRecords() {
-  const list = document.getElementById('recordList');
-  list.innerHTML = ''; // 一旦リセット
+// ========== 記録表示 ==========
+function showTopTimes(activity) {
+  // 上位3タイムを表示
+  const list = document.getElementById('topTimes');
+  list.innerHTML = '';
+  const records = getRecordArray().filter(r => r.activity === activity);
+  const top = records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).slice(0, 3);
 
-  const records = getRecordArray(); // 配列取得
-
-  // 新しい記録が上に来るように逆順で表示
-  records.slice().reverse().forEach((record, index) => {
+  top.forEach(record => {
     const li = document.createElement('li');
-    li.textContent = `[${record.date}] ${record.activity}：${record.time}秒`;
-
-    // 削除ボタン追加
-    const delBtn = document.createElement('button');
-    delBtn.textContent = '削除';
-    delBtn.onclick = () => deleteRecord(records.length - 1 - index); // 元のインデックス指定
-    li.appendChild(delBtn);
-
+    li.textContent = `${record.time}秒（${record.date}）`;
     list.appendChild(li);
   });
 }
 
-// 指定した記録を削除
-function deleteRecord(index) {
-  const records = getRecordArray();
-  if (index >= 0 && index < records.length) {
-    records.splice(index, 1); // 1件削除
-    localStorage.setItem('records', JSON.stringify(records)); // 保存
-    loadRecords(); // 再表示
-  }
+function showActivitiesPage() {
+  // 活動記録ページ表示
+  showPage('activityPage');
+  loadActivities();
+}
+
+function showActivityRecords(activity, highlightLast = false) {
+  // 特定の活動の全記録を表示（必要なら最後の記録をハイライト）
+  const list = document.getElementById('activityRecordList');
+  list.innerHTML = '';
+  const records = getRecordArray().filter(r => r.activity === activity);
+
+  const lastTime = highlightLast ? records[records.length - 1]?.time : null;
+
+  records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).forEach(record => {
+    const li = document.createElement('li');
+    li.textContent = `${record.time}秒（${record.date}）`;
+    if (highlightLast && record.time === lastTime) {
+      li.style.color = 'red'; // 直近の記録を赤色で表示
+    }
+    list.appendChild(li);
+  });
+  showPage('detailPage');
+}
+
+function showAllRecordsPage() {
+  // 全活動の一覧ページを表示
+  const list = document.getElementById('allActivityList');
+  list.innerHTML = '';
+  const activities = JSON.parse(localStorage.getItem('activities')) || [];
+
+  activities.forEach(activity => {
+    const li = document.createElement('li');
+    li.textContent = activity;
+    li.onclick = () => showActivityRecords(activity); // 活動クリックでその記録へ
+    list.appendChild(li);
+  });
+  
 }

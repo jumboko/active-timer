@@ -2,40 +2,54 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>活動記録タイマー</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>活動記録アプリ</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>活動記録タイマー</h1>
 
-  <!-- 活動選択・追加フォーム -->
-  <label>活動を選択：
-    <select id="activitySelect"></select>
-  </label>
-  <br />
-  <input type="text" id="newActivity" placeholder="新しい活動名を入力" />
-  <button onclick="addActivity()">追加</button>
-
-  <hr />
-
-  <!-- タイマー操作 -->
-  <button onclick="startTimer()">スタート</button>
-  <button onclick="stopTimer()">ストップ</button>
-
-  <!-- 時間表示 -->
-  <div id="timeDisplay"></div>
-
-  <!-- 記録保存ボタン -->
-  <button id="saveBtn" onclick="confirmSave()" disabled>記録を保存</button>
-
-  <!-- 記録一覧 -->
-  <div class="record">
-    <h2>記録一覧</h2>
-    <ul id="recordList"></ul>
+  <!-- 🌟 トップ画面 -->
+  <div id="homePage" class="page active">
+    <h1>活動記録アプリ</h1>
+    <button onclick="showPage('recordPage')">活動を記録</button>
+    <button onclick="showAllRecordsPage();showPage('historyPage');">過去の記録確認</button>
   </div>
 
-  <!-- スクリプト読み込み -->
+  <!-- 📝 活動記録ページ -->
+  <div id="recordPage" class="page">
+    <h2>活動を記録</h2>
+    <input type="text" id="newActivity" placeholder="新しい活動名" />
+    <button onclick="addActivity()">追加</button>
+    <ul id="activityList"></ul>
+    <button onclick="showPage('homePage')">← 戻る</button>
+  </div>
+
+  <!-- ⏱ タイマー画面 -->
+  <div id="timerPage" class="page">
+    <h2 id="timerTitle">活動名</h2>
+    <p id="timeDisplay">00:00</p>
+    <button onclick="startTimer()">スタート</button>
+    <button onclick="stopTimer()">ストップ</button>
+    <button onclick="resumeTimer()">再開</button>
+    <button onclick="confirmSave()">登録</button>
+    <h3>上位記録</h3>
+    <ul id="topTimes"></ul>
+    <button onclick="showPage('recordPage')">← 戻る</button>
+  </div>
+
+  <!-- 📚 記録確認ページ -->
+  <div id="historyPage" class="page">
+    <h2>記録の確認</h2>
+    <ul id="allActivityList"></ul>
+    <button onclick="showPage('homePage')">← 戻る</button>
+  </div>
+
+  <!-- 🏅 活動ごとの記録一覧ページ -->
+  <div id="detailPage" class="page">
+    <h2 id="detailTitle">活動名の記録</h2>
+    <ul id="activityRecordList"></ul>
+    <button onclick="showPage('historyPage')">← 戻る</button>
+  </div>
+
   <script src="main.js"></script>
 </body>
 </html>
