@@ -55,3 +55,10 @@ button {
 .page.active {
   display: block;
 }
+
+
+/* タイマー表示の小数部を小さくする */
+#timeDisplay small {
+  font-size: 0.6em;
+  vertical-align: top;
+}

@@ -16,7 +16,7 @@
 
   <!-- 📝 活動記録ページ -->
   <div id="recordPage" class="page">
-    <h2>活動を記録</h2>
+    <h2>活動を選択</h2>
     <input type="text" id="newActivity" placeholder="新しい活動名" />
     <button onclick="addActivity()">追加</button>
     <ul id="activityList"></ul>
@@ -26,11 +26,12 @@
   <!-- ⏱ タイマー画面 -->
   <div id="timerPage" class="page">
     <h2 id="timerTitle">活動名</h2>
-    <p id="timeDisplay">00:00</p>
-    <button onclick="startTimer()">スタート</button>
-    <button onclick="stopTimer()">ストップ</button>
-    <button onclick="resumeTimer()">再開</button>
-    <button onclick="confirmSave()">登録</button>
+    <p id="timeDisplay">0h00m00s<small>00</small></p>
+    <button onclick="startTimer()" id = "startBtn">スタート</button>
+    <button onclick="stopTimer()" id = "stopBtn" style="display: none">ストップ</button>
+    <button onclick="resumeTimer()" id = "resumeBtn" style="display: none">再開</button>
+    <button onclick="confirmSave()" id = "saveBtn" style="display: none">登録</button>
+    <button onclick="resetTimer()" id = "resetBtn" style="display: none">リセット</button>
     <h3>上位記録</h3>
     <ul id="topTimes"></ul>
     <button onclick="showPage('recordPage')">← 戻る</button>

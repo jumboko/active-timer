@@ -5,20 +5,27 @@
 let startTime; // タイマーの開始時刻
 let elapsedTime = 0; // 経過時間（ms）
 let resumedTime = 0; // 再開時の累積時間
+let timerInterval; // リアルタイム表示用 setInterval の識別子
 let currentActivity = null; // 現在選択されている活動
 let currentPageId = "homePage"; // 現在表示されているページID
 
 // ページ読み込み時の初期化処理
 window.onload = () => {
   loadActivities(); // 活動一覧の読み込み
+  updateTimerDisplay(0); // タイマー初期表示を0で統一（0h00m00s<small>00</small>）
 };
 
 // ========== ページ切り替え ==========
 function showPage(id) {
+  // もし今の画面が timerPage で、離れようとしているならリセット
+  if (currentPageId === 'timerPage' && id !== 'timerPage') {
+    resetTimer(); // 測定キャンセルとみなす
+  }
+
   // すべてのページを非表示にし、指定ページのみ表示
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  currentPageId = id;
+  currentPageId = id; // 現在の画面idを記録
 }
 
 // ========== ユーティリティ ==========
@@ -56,6 +63,7 @@ function loadActivities() {
       li.textContent = activity;
       li.onclick = () => {
         currentActivity = activity;
+        document.getElementById('timerTitle').textContent = `${activity} のタイマー`; // ← 活動名を表示！
         showPage('timerPage');
         showTopTimes(activity); // 上位タイムを表示
       };
@@ -80,31 +88,70 @@ function addActivity() {
 }
 
 // ========== タイマー ==========
-function startTimer() {
-  // タイマー開始
-  startTime = Date.now();
-  document.getElementById('saveBtn').disabled = true;
-  document.getElementById('resumeBtn').disabled = true;
-  document.getElementById('timeDisplay').textContent = '計測中...';
+// 経過時間（ms）を "0h00m00s00" 形式にフォーマット
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const hundredths = Math.floor((ms % 1000) / 10); // 小数点以下2桁
+  return {
+    text: `${hours}h${String(minutes).padStart(2, '0')}m${String(seconds).padStart(2, '0')}s`,
+    small: String(hundredths).padStart(2, '0')
+  };
 }
 
+// タイマー表示を更新する（HTMLに反映）
+function updateTimerDisplay(ms) {
+  const time = formatTime(ms);
+  document.getElementById('timeDisplay').innerHTML = `${time.text}<small>${time.small}</small>`;
+}
+
+// タイマー開始（リアルタイムで表示）
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    updateTimerDisplay(elapsedTime + (Date.now() - startTime));
+  }, 10); // 10msごとに更新
+
+    // ボタン表示制御
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'inline-block';
+  document.getElementById('resumeBtn').style.display = 'none';
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
+}
+
+// タイマー停止（時間を加算し、リアルタイム更新停止）
 function stopTimer() {
-  // タイマー停止、経過時間を計算
   if (!startTime) return;
+  clearInterval(timerInterval);
   elapsedTime += Date.now() - startTime;
   startTime = null;
-  const seconds = (elapsedTime / 1000).toFixed(1);
-  document.getElementById('timeDisplay').textContent = `記録時間：${seconds} 秒`;
-  document.getElementById('saveBtn').disabled = false;
-  document.getElementById('resumeBtn').disabled = false;
+
+  updateTimerDisplay(elapsedTime);
+
+    // ボタン表示制御
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('resumeBtn').style.display = 'inline-block';
+  document.getElementById('saveBtn').style.display = 'inline-block';
+  document.getElementById('resetBtn').style.display = 'inline-block';
 }
 
+// タイマー再開（前回までの時間を継続）
 function resumeTimer() {
-  // タイマー再開
   startTime = Date.now();
-  document.getElementById('timeDisplay').textContent = '再開中...';
-  document.getElementById('saveBtn').disabled = true;
-  document.getElementById('resumeBtn').disabled = true;
+  timerInterval = setInterval(() => {
+    updateTimerDisplay(elapsedTime + (Date.now() - startTime));
+  }, 10);
+
+  // ボタン表示制御
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'inline-block';
+  document.getElementById('resumeBtn').style.display = 'none';
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
 }
 
 function confirmSave() {
@@ -125,12 +172,24 @@ function saveRecord() {
   localStorage.setItem('records', JSON.stringify(records));
 
   // タイマーリセット
-  elapsedTime = 0;
-  document.getElementById('saveBtn').disabled = true;
-  document.getElementById('resumeBtn').disabled = true;
-  document.getElementById('timeDisplay').textContent = '';
+  resetTimer();
 
   showActivityRecords(currentActivity, true); // 保存後に記録表示ページへ
+}
+
+// タイマーリセット処理
+function resetTimer() {
+  clearInterval(timerInterval); // インターバル停止
+  startTime = null;
+  elapsedTime = 0;
+  updateTimerDisplay(0); // 表示を0にリセット
+
+  // ボタン表示制御：初期状態に戻す
+  document.getElementById('startBtn').style.display = 'inline-block';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('resumeBtn').style.display = 'none';
+  document.getElementById('saveBtn').style.display = 'none';
+  document.getElementById('resetBtn').style.display = 'none';
 }
 
 // ========== 記録表示 ==========
@@ -170,6 +229,7 @@ function showActivityRecords(activity, highlightLast = false) {
     }
     list.appendChild(li);
   });
+  document.getElementById('detailTitle').textContent = `${activity} の記録`; // ← 活動名を表示！
   showPage('detailPage');
 }
 
