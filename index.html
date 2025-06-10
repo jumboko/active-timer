@@ -2,53 +2,57 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>活動記録アプリ</title>
+  <title>活動記録タイマー</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- 🌟 トップ画面 -->
+  <!-- トップ画面 -->
   <div id="homePage" class="page active">
-    <h1>活動記録アプリ</h1>
-    <button onclick="showPage('recordPage')">活動を記録</button>
-    <button onclick="showAllRecordsPage();showPage('historyPage');">過去の記録確認</button>
+    <h1><ruby>活動記録<rt>かつどうきろく</rt></ruby>タイマー</h1>
+    <button onclick="showPage('recordPage')">
+      <ruby>活動<rt>かつどう</rt></ruby>を<ruby>記録<rt>きろく</rt></ruby>
+    </button>
+    <button onclick="showAllRecordsPage();showPage('historyPage');">
+      <ruby>記録確認<rt>きろくかくにん</rt></ruby>
+    </button>
   </div>
 
-  <!-- 📝 活動記録ページ -->
+  <!-- 活動選択画面 -->
   <div id="recordPage" class="page">
-    <h2>活動を選択</h2>
+    <h2><ruby>活動<rt>かつどう</rt></ruby>を<ruby>選択<rt>せんたく</rt></ruby></h2>
     <input type="text" id="newActivity" placeholder="新しい活動名" />
-    <button onclick="addActivity()">追加</button>
+    <button onclick="addActivity()"><ruby>追加<rt>ついか</rt></ruby></button>
     <ul id="activityList"></ul>
-    <button onclick="showPage('homePage')">← 戻る</button>
+    <button onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
   </div>
 
-  <!-- ⏱ タイマー画面 -->
+  <!-- タイマー画面 -->
   <div id="timerPage" class="page">
-    <h2 id="timerTitle">活動名</h2>
+    <h2 id="timerTitle">活動名のタイマー</h2>
     <p id="timeDisplay">0h00m00s<small>00</small></p>
     <button onclick="startTimer()" id = "startBtn">スタート</button>
     <button onclick="stopTimer()" id = "stopBtn" style="display: none">ストップ</button>
-    <button onclick="resumeTimer()" id = "resumeBtn" style="display: none">再開</button>
-    <button onclick="confirmSave()" id = "saveBtn" style="display: none">登録</button>
+    <button onclick="resumeTimer()" id = "resumeBtn" style="display: none"><ruby>再開<rt>さいかい</rt></ruby></button>
+    <button onclick="confirmSave()" id = "saveBtn" style="display: none"><ruby>登録<rt>とうろく</rt></ruby></button>
     <button onclick="resetTimer()" id = "resetBtn" style="display: none">リセット</button>
-    <h3>上位記録</h3>
+    <h3><ruby>上位記録<rt>じょういきろく</rt></ruby></h3>
     <ul id="topTimes"></ul>
-    <button onclick="showPage('recordPage')">← 戻る</button>
+    <button onclick="showPage('recordPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
   </div>
 
-  <!-- 📚 記録確認ページ -->
+  <!-- 活動記録選択画面 -->
   <div id="historyPage" class="page">
-    <h2>記録の確認</h2>
+    <h2><ruby>活動記録<rt>かつどうきろく</rt></ruby>の<ruby>選択<rt>せんたく</rt></ruby></h2>
     <ul id="allActivityList"></ul>
-    <button onclick="showPage('homePage')">← 戻る</button>
+    <button onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
   </div>
 
-  <!-- 🏅 活動ごとの記録一覧ページ -->
+  <!-- 活動毎の記録一覧 -->
   <div id="detailPage" class="page">
     <h2 id="detailTitle">活動名の記録</h2>
     <ul id="activityRecordList"></ul>
-    <button onclick="showPage('historyPage')">← 戻る</button>
+    <button onclick="showPage('historyPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
   </div>
 
   <script src="main.js"></script>

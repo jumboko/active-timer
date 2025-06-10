@@ -63,7 +63,7 @@ function loadActivities() {
       li.textContent = activity;
       li.onclick = () => {
         currentActivity = activity;
-        document.getElementById('timerTitle').textContent = `${activity} のタイマー`; // ← 活動名を表示！
+        document.getElementById('timerTitle').textContent = `${activity}のタイマー`; // ← 活動名を表示！
         showPage('timerPage');
         showTopTimes(activity); // 上位タイムを表示
       };
@@ -229,7 +229,7 @@ function showActivityRecords(activity, highlightLast = false) {
     }
     list.appendChild(li);
   });
-  document.getElementById('detailTitle').textContent = `${activity} の記録`; // ← 活動名を表示！
+  document.getElementById('detailTitle').innerHTML = `${activity}の<ruby>記録<rt>きろく</rt></ruby>`; // ← 活動名を表示！
   showPage('detailPage');
 }
 
