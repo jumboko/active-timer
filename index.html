@@ -10,11 +10,11 @@
   <!-- トップ画面 -->
   <div id="homePage" class="page active">
     <h1><ruby>活動記録<rt>かつどうきろく</rt></ruby>タイマー</h1>
+    <button onclick="showPage('historyPage');">
+      <ruby>記録確認<rt>きろくかくにん</rt></ruby>
+    </button>
     <button onclick="showPage('recordPage')">
       <ruby>活動<rt>かつどう</rt></ruby>を<ruby>記録<rt>きろく</rt></ruby>
-    </button>
-    <button onclick="showAllRecordsPage();showPage('historyPage');">
-      <ruby>記録確認<rt>きろくかくにん</rt></ruby>
     </button>
   </div>
 
@@ -53,6 +53,7 @@
     <h2 id="detailTitle">活動名の記録</h2>
     <ul id="activityRecordList"></ul>
     <button onclick="showPage('historyPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
+    <button onclick="backToTimer()">タイマー画面へ</button>
   </div>
 
   <script src="main.js"></script>

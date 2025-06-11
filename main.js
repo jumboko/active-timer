@@ -44,19 +44,13 @@ function getRecordArray() {
 function loadActivities() {
   // 活動リストとセレクトボックスを再描画
   const list = document.getElementById('activityList');
-  const select = document.getElementById('activitySelect');
+  const allList = document.getElementById('allActivityList');
   const activities = JSON.parse(localStorage.getItem('activities')) || [];
 
   if (list) list.innerHTML = '';
-  if (select) select.innerHTML = '';
+  if (allList) allList.innerHTML = '';
 
   activities.forEach(activity => {
-    // セレクトボックスに追加
-    const option = document.createElement('option');
-    option.value = activity;
-    option.textContent = activity;
-    if (select) select.appendChild(option);
-
     // 活動リストに追加し、クリックでタイマー画面へ遷移
     if (list) {
       const li = document.createElement('li');
@@ -68,6 +62,14 @@ function loadActivities() {
         showTopTimes(activity); // 上位タイムを表示
       };
       list.appendChild(li);
+    }
+
+    // 記録表示画面用（allActivityList）、クリックで活動毎の記録一覧へ遷移
+    if (allList) {
+      const li = document.createElement('li');
+      li.textContent = activity;
+      li.onclick = () => showActivityRecords(activity);
+      allList.appendChild(li);
     }
   });
 }
@@ -165,7 +167,7 @@ function confirmSave() {
 function saveRecord() {
   // 記録を保存
   const date = new Date().toLocaleString();
-  const seconds = (elapsedTime / 1000).toFixed(1);
+  const seconds = elapsedTime / 1000;
 
   const records = getRecordArray();
   records.push({ activity: currentActivity, time: seconds, date });
@@ -202,15 +204,10 @@ function showTopTimes(activity) {
 
   top.forEach(record => {
     const li = document.createElement('li');
-    li.textContent = `${record.time}秒（${record.date}）`;
+    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒 → ms → 表示形式に変換
+    li.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`;
     list.appendChild(li);
   });
-}
-
-function showActivitiesPage() {
-  // 活動記録ページ表示
-  showPage('activityPage');
-  loadActivities();
 }
 
 function showActivityRecords(activity, highlightLast = false) {
@@ -219,31 +216,22 @@ function showActivityRecords(activity, highlightLast = false) {
   list.innerHTML = '';
   const records = getRecordArray().filter(r => r.activity === activity);
 
-  const lastTime = highlightLast ? records[records.length - 1]?.time : null;
+  // レコード登録時の場合、最新の日付を取得
+  let newestTime = 0;
+  if (highlightLast) {
+    newestTime = Math.max(...records.map(r => new Date(r.date).getTime()));
+  }
 
   records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).forEach(record => {
     const li = document.createElement('li');
-    li.textContent = `${record.time}秒（${record.date}）`;
-    if (highlightLast && record.time === lastTime) {
+    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
+    li.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`;
+    // レコード登録時で最新の日付の場合
+    if (highlightLast && new Date(record.date).getTime() === newestTime) {
       li.style.color = 'red'; // 直近の記録を赤色で表示
     }
     list.appendChild(li);
   });
   document.getElementById('detailTitle').innerHTML = `${activity}の<ruby>記録<rt>きろく</rt></ruby>`; // ← 活動名を表示！
   showPage('detailPage');
-}
-
-function showAllRecordsPage() {
-  // 全活動の一覧ページを表示
-  const list = document.getElementById('allActivityList');
-  list.innerHTML = '';
-  const activities = JSON.parse(localStorage.getItem('activities')) || [];
-
-  activities.forEach(activity => {
-    const li = document.createElement('li');
-    li.textContent = activity;
-    li.onclick = () => showActivityRecords(activity); // 活動クリックでその記録へ
-    list.appendChild(li);
-  });
-  
 }
