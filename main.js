@@ -40,7 +40,7 @@ function getRecordArray() {
   }
 }
 
-// ========== 活動管理 ==========
+// ========== データ取得 ==========
 function loadActivities() {
   // 活動リストとセレクトボックスを再描画
   const list = document.getElementById('activityList');
@@ -55,12 +55,7 @@ function loadActivities() {
     if (list) {
       const li = document.createElement('li');
       li.textContent = activity;
-      li.onclick = () => {
-        currentActivity = activity;
-        document.getElementById('timerTitle').textContent = `${activity}のタイマー`; // ← 活動名を表示！
-        showPage('timerPage');
-        showTopTimes(activity); // 上位タイムを表示
-      };
+      li.onclick = () => showTopTimes(activity); // 上位タイムを表示
       list.appendChild(li);
     }
 
@@ -74,6 +69,53 @@ function loadActivities() {
   });
 }
 
+// ========== 記録表示 ==========
+function showTopTimes(activity) {
+  // 上位3タイムを表示
+  const list = document.getElementById('topTimes');
+  list.innerHTML = '';
+  const records = getRecordArray().filter(r => r.activity === activity);
+  const top = records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).slice(0, 3);
+
+  top.forEach(record => {
+    const li = document.createElement('li');
+    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒 → ms → 表示形式に変換
+    li.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`;
+    list.appendChild(li);
+  });
+  currentActivity = activity;
+  document.getElementById('timerTitle').textContent = `${activity}のタイマー`; // ← 活動名を表示！
+  showPage('timerPage');
+}
+
+function showActivityRecords(activity, highlightLast = false) {
+  // 特定の活動の全記録を表示（必要なら最後の記録をハイライト）
+  const list = document.getElementById('activityRecordList');
+  list.innerHTML = '';
+  const records = getRecordArray().filter(r => r.activity === activity);
+
+  // レコード登録時の場合、最新の日付を取得
+  let newestTime = 0;
+  if (highlightLast) {
+    newestTime = Math.max(...records.map(r => new Date(r.date).getTime()));
+  }
+
+  records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).forEach(record => {
+    const li = document.createElement('li');
+    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
+    li.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`;
+    // レコード登録時で最新の日付の場合
+    if (highlightLast && new Date(record.date).getTime() === newestTime) {
+      li.style.color = 'red'; // 直近の記録を赤色で表示
+    }
+    list.appendChild(li);
+  });
+  currentActivity = activity;
+  document.getElementById('detailTitle').innerHTML = `${activity}の<ruby>記録<rt>きろく</rt></ruby>`; // ← 活動名を表示！
+  showPage('detailPage');
+}
+
+// ========== 活動管理 ==========
 function addActivity() {
   // 新規活動を登録
   const input = document.getElementById('newActivity');
@@ -194,44 +236,13 @@ function resetTimer() {
   document.getElementById('resetBtn').style.display = 'none';
 }
 
-// ========== 記録表示 ==========
-function showTopTimes(activity) {
-  // 上位3タイムを表示
-  const list = document.getElementById('topTimes');
-  list.innerHTML = '';
-  const records = getRecordArray().filter(r => r.activity === activity);
-  const top = records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).slice(0, 3);
-
-  top.forEach(record => {
-    const li = document.createElement('li');
-    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒 → ms → 表示形式に変換
-    li.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`;
-    list.appendChild(li);
-  });
+// 
+function backTodetailPage() {
+  showActivityRecords(currentActivity, true); // 活動毎の記録一覧へ
 }
 
-function showActivityRecords(activity, highlightLast = false) {
-  // 特定の活動の全記録を表示（必要なら最後の記録をハイライト）
-  const list = document.getElementById('activityRecordList');
-  list.innerHTML = '';
-  const records = getRecordArray().filter(r => r.activity === activity);
-
-  // レコード登録時の場合、最新の日付を取得
-  let newestTime = 0;
-  if (highlightLast) {
-    newestTime = Math.max(...records.map(r => new Date(r.date).getTime()));
-  }
-
-  records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).forEach(record => {
-    const li = document.createElement('li');
-    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
-    li.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`;
-    // レコード登録時で最新の日付の場合
-    if (highlightLast && new Date(record.date).getTime() === newestTime) {
-      li.style.color = 'red'; // 直近の記録を赤色で表示
-    }
-    list.appendChild(li);
-  });
-  document.getElementById('detailTitle').innerHTML = `${activity}の<ruby>記録<rt>きろく</rt></ruby>`; // ← 活動名を表示！
-  showPage('detailPage');
+// 
+function backToTimer() {
+  showTopTimes(currentActivity); // タイマー画面へ
 }
+
