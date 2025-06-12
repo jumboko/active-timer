@@ -23,25 +23,21 @@ button {
 }
 
 /* 記録関連のセクション */
-.record {
-  margin-top: 20px;
-}
 
-.record ul {
-  list-style: none;
-  padding-left: 0;
-}
 
-.record li {
-  margin-bottom: 6px;
-}
-
-/* 削除ボタンのスタイル */
-.record button {
-  margin-left: 10px;
-  background: #ffcccc;
-  border: none;
-  padding: 4px 8px;
+/* 活動記録・上位記録リスト共通スタイル */
+ #activityList li, #topTimes li, #allActivityList li,
+ #activityRecordList li{
+  display: flex;               /* 横並び（テキスト＋ボタン） 右は時に点がつく */
+  align-items: center;         /* 中央揃え */
+  justify-content: flex-start;  /* ← 左寄せ */
+  height: 2.6em;               /* 高さ */
+  padding: 0 4px;              /* ちょっと左右に余裕 */
+  margin-bottom: 6px;         /* 行間にスペース */
+  border-bottom: 1px solid #ddd; /* 区切り線（オプション） */
+  max-width: 380px;         /* ← 削除ボタン＋テキストの想定サイズに調整 文字数が多いと改行したりめちゃくちゃ */
+  box-sizing: border-box; /**/
+  /*background: yellow; /* 背景色 */
 }
 
 /* ========== 画面切り替え用スタイル ========== */
@@ -62,3 +58,33 @@ button {
   font-size: 0.6em;
   vertical-align: top;
 }
+
+/* 活動記録選択画面の活動に適用  */
+.activityName {
+  display: inline-block;
+  width: 270px;
+  white-space: nowrap; /* 1行で表示される */
+  overflow: hidden; /* 長すぎたら隠す */
+  text-overflow: ellipsis; /* 長すぎる内容は ... に */
+  cursor: pointer; /* マウスをポインタに */
+}
+
+/* 活動毎の記録一覧のタイムに適用  */
+.recordText {
+  display: inline-block;
+  width: 270px;  /* 👈 調整してね！200〜280pxくらいが目安 */
+  /*white-space: nowrap;  1行で表示される */
+  /*overflow: hidden;  長すぎたら隠す */
+  /*text-overflow: ellipsis;  長すぎる内容は ... に */
+}
+
+/* 削除ボタン  */
+.deleteBtn {
+  margin-left: 10px;
+  background: #ffcccc;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  height: 1.8em; /* 高さをliに揃えたいが？？？？？？？？？？？？？？？？？ */
+}
+

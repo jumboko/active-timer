@@ -40,7 +40,7 @@ function getRecordArray() {
   }
 }
 
-// ========== データ取得 ==========
+// ========== データ取得(活動名を取得し2画面の表示設定) ==========
 function loadActivities() {
   // 活動リストとセレクトボックスを再描画
   const list = document.getElementById('activityList');
@@ -54,7 +54,7 @@ function loadActivities() {
     // 活動リストに追加し、クリックでタイマー画面へ遷移
     if (list) {
       const li = document.createElement('li');
-      li.textContent = activity;
+      li.textContent = activity; // 表示名
       li.onclick = () => showTopTimes(activity); // 上位タイムを表示
       list.appendChild(li);
     }
@@ -62,8 +62,21 @@ function loadActivities() {
     // 記録表示画面用（allActivityList）、クリックで活動毎の記録一覧へ遷移
     if (allList) {
       const li = document.createElement('li');
-      li.textContent = activity;
-      li.onclick = () => showActivityRecords(activity);
+
+      // 活動名表示
+      const span = document.createElement('span');
+      span.classList.add('activityName');
+      span.textContent = activity; // 表示名
+      span.onclick = () => showActivityRecords(activity); //押下時の挙動設定
+      li.appendChild(span);
+
+      // 削除ボタン表示
+      const delBtn = document.createElement('button');
+      delBtn.classList.add('deleteBtn');
+      delBtn.textContent = '削除'; // 表示名
+      delBtn.onclick = () => deleteActivity(activity);  //押下時の挙動設定
+      li.appendChild(delBtn);
+
       allList.appendChild(li);
     }
   });
@@ -102,12 +115,26 @@ function showActivityRecords(activity, highlightLast = false) {
 
   records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).forEach(record => {
     const li = document.createElement('li');
+
+    // タイムを表示
+    const span = document.createElement('span');
+    span.classList.add('recordText');
     const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
-    li.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`;
+    span.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`; // 表示名
+    li.appendChild(span);
+
+    // 削除ボタン表示
+    const delBtn = document.createElement('button');
+    delBtn.classList.add('deleteBtn');
+    delBtn.textContent = '削除'; // 表示名
+    delBtn.onclick = () => deleteRecord(activity, record);  //押下時の挙動設定
+    li.appendChild(delBtn);
+
     // レコード登録時で最新の日付の場合
     if (highlightLast && new Date(record.date).getTime() === newestTime) {
       li.style.color = 'red'; // 直近の記録を赤色で表示
     }
+
     list.appendChild(li);
   });
   currentActivity = activity;
@@ -198,14 +225,6 @@ function resumeTimer() {
   document.getElementById('resetBtn').style.display = 'none';
 }
 
-function confirmSave() {
-  // 保存確認ダイアログ
-  const confirmResult = confirm("この記録を保存しますか？");
-  if (confirmResult) {
-    saveRecord();
-  }
-}
-
 function saveRecord() {
   // 記録を保存
   const date = new Date().toLocaleString();
@@ -236,13 +255,43 @@ function resetTimer() {
   document.getElementById('resetBtn').style.display = 'none';
 }
 
-// 
+// タイマー画面から活動毎の記録一覧へ
 function backTodetailPage() {
-  showActivityRecords(currentActivity, true); // 活動毎の記録一覧へ
+  showActivityRecords(currentActivity); // 活動毎の記録一覧へ
 }
 
-// 
+// 活動毎の記録一覧へからタイマー画面へ
 function backToTimer() {
   showTopTimes(currentActivity); // タイマー画面へ
 }
 
+// 活動削除
+function deleteActivity(name) {
+  if (!confirm(`活動「${name}」と、その記録を削除すると復元できません。実行しますか？`)) return;
+
+  // 活動を削除
+  let activities = JSON.parse(localStorage.getItem('activities')) || [];
+  activities = activities.filter(a => a !== name);
+  localStorage.setItem('activities', JSON.stringify(activities));
+
+  // 関連記録も削除
+  let records = getRecordArray();
+  records = records.filter(r => r.activity !== name);
+  localStorage.setItem('records', JSON.stringify(records));
+
+  // 表示更新
+  loadActivities();
+}
+
+// タイム削除
+function deleteRecord(activity, target) {
+  if (!confirm("この記録を削除すると復元できません。実行しますか？")) return;
+
+  let records = getRecordArray();
+  // 活動名＋日時が一致する記録だけ除外して保存し直す
+  records = records.filter(r => !(r.activity === activity && r.time === target.time && r.date === target.date));
+  localStorage.setItem('records', JSON.stringify(records));
+
+  // 再描画
+  showActivityRecords(activity);
+}
