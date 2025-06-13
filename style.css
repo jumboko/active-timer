@@ -1,0 +1,90 @@
+/* 全体の基本スタイル */
+body {
+  font-family: "Hiragino Sans", sans-serif;
+  padding: 20px;
+  background: #f9f9f9;
+}
+
+/* タイトル */
+h1 {
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
+/* 入力欄、セレクト、ボタン共通スタイル */
+input, select, button {
+  margin: 5px 0;
+  padding: 5px;
+  font-size: 1em;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* 記録関連のセクション */
+
+
+/* 活動記録・上位記録リスト共通スタイル */
+ #activityList li, #topTimes li, #allActivityList li,
+ #activityRecordList li{
+  display: flex;               /* 横並び（テキスト＋ボタン） 右は時に点がつく */
+  align-items: center;         /* 中央揃え */
+  justify-content: flex-start;  /* ← 左寄せ */
+  height: 2.6em;               /* 高さ */
+  padding: 0 4px;              /* ちょっと左右に余裕 */
+  margin-bottom: 6px;         /* 行間にスペース */
+  border-bottom: 1px solid #ddd; /* 区切り線（オプション） */
+  max-width: 380px;         /* ← 削除ボタン＋テキストの想定サイズに調整 文字数が多いと改行したりめちゃくちゃ */
+  box-sizing: border-box; /**/
+  /*background: yellow; /* 背景色 */
+}
+
+/* ========== 画面切り替え用スタイル ========== */
+
+/* デフォルトで全てのページを非表示に */
+.page {
+  display: none;
+}
+
+/* JavaScriptでactiveクラスが付いたページだけ表示 */
+.page.active {
+  display: block;
+}
+
+
+/* タイマー表示の小数部を小さくする */
+#timeDisplay small {
+  font-size: 0.6em;
+  vertical-align: top;
+}
+
+/* 活動記録選択画面の活動に適用  */
+.activityName {
+  display: inline-block;
+  width: 270px;
+  white-space: nowrap; /* 1行で表示される */
+  overflow: hidden; /* 長すぎたら隠す */
+  text-overflow: ellipsis; /* 長すぎる内容は ... に */
+  cursor: pointer; /* マウスをポインタに */
+}
+
+/* 活動毎の記録一覧のタイムに適用  */
+.recordText {
+  display: inline-block;
+  width: 270px;  /* 👈 調整してね！200〜280pxくらいが目安 */
+  /*white-space: nowrap;  1行で表示される */
+  /*overflow: hidden;  長すぎたら隠す */
+  /*text-overflow: ellipsis;  長すぎる内容は ... に */
+}
+
+/* 削除ボタン  */
+.deleteBtn {
+  margin-left: 10px;
+  background: #ffcccc;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  height: 1.8em; /* 高さをliに揃えたいが？？？？？？？？？？？？？？？？？ */
+}
+
