@@ -3,6 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <title>活動記録タイマー</title>
+ 
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+    // 追加
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDpG7dqCaUB8A9jd-EfdVbemN8HVOsUjSM",
+      authDomain: "activity-timer-52a85.firebaseapp.com",
+      projectId: "activity-timer-52a85",
+      storageBucket: "activity-timer-52a85.appspot.com", // ← 修正
+      messagingSenderId: "68281906785",
+      appId: "1:68281906785:web:4508221d36146eb9475c20"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app); // 追加
+
+    // 他のJSファイルで使えるようにグローバル変数として渡す
+    window.firebaseDB = db; // 追加
+  </script>
+
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -34,7 +61,7 @@
     <button onclick="startTimer()" id = "startBtn">スタート</button>
     <button onclick="stopTimer()" id = "stopBtn" style="display: none">ストップ</button>
     <button onclick="resumeTimer()" id = "resumeBtn" style="display: none"><ruby>再開<rt>さいかい</rt></ruby></button>
-    <button onclick="saveRecord()" id = "saveBtn" style="display: none"><ruby>登録<rt>とうろく</rt></ruby></button>
+    <button onclick="saveTimer()" id = "saveBtn" style="display: none"><ruby>登録<rt>とうろく</rt></ruby></button>
     <button onclick="resetTimer()" id = "resetBtn" style="display: none">リセット</button>
     <h3><ruby>上位記録<rt>じょういきろく</rt></ruby></h3>
     <ul id="topTimes"></ul>
@@ -57,6 +84,6 @@
     <button onclick="backToTimer()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
   </div>
 
-  <script src="main.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>

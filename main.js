@@ -1,6 +1,18 @@
 // ================================
 // 活動記録タイマー - ロジック編（仕様変更対応版）
 // ================================
+import {
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
+  query,
+  orderBy,
+  getFirestore,
+} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+const db = window.firebaseDB;
 
 let startTime; // タイマーの開始時刻
 let elapsedTime = 0; // 経過時間（ms）
@@ -10,8 +22,8 @@ let currentActivity = null; // 現在選択されている活動
 let currentPageId = "homePage"; // 現在表示されているページID
 
 // ページ読み込み時の初期化処理
-window.onload = () => {
-  loadActivities(); // 活動一覧の読み込み
+window.onload = async () => {
+  await loadActivities(); // 活動一覧の読み込み
   updateTimerDisplay(0); // タイマー初期表示を0で統一（0h00m00s<small>00</small>）
 };
 
@@ -28,29 +40,19 @@ function showPage(id) {
   currentPageId = id; // 現在の画面idを記録
 }
 
-// ========== ユーティリティ ==========
-function getRecordArray() {
-  // localStorageから記録データを取得し、配列として返す
-  const raw = localStorage.getItem('records');
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    return [];
-  }
-}
-
 // ========== データ取得(活動名を取得し2画面の表示設定) ==========
-function loadActivities() {
+async function loadActivities() {
   // 活動リストとセレクトボックスを再描画
   const list = document.getElementById('activityList');
   const allList = document.getElementById('allActivityList');
-  const activities = JSON.parse(localStorage.getItem('activities')) || [];
+  const snapshot = await getDocs(collection(db, "activities"));
 
   if (list) list.innerHTML = '';
   if (allList) allList.innerHTML = '';
 
-  activities.forEach(activity => {
+  snapshot.forEach(docSnap => {
+    const activity = docSnap.data().name;
+
     // 活動リストに追加し、クリックでタイマー画面へ遷移
     if (list) {
       const li = document.createElement('li');
@@ -74,7 +76,9 @@ function loadActivities() {
       const delBtn = document.createElement('button');
       delBtn.classList.add('deleteBtn');
       delBtn.textContent = '削除'; // 表示名
-      delBtn.onclick = () => deleteActivity(activity);  //押下時の挙動設定
+      delBtn.onclick = async () => {  //押下時の挙動設定
+        await deleteActivity(activity);
+      };
       li.appendChild(delBtn);
 
       allList.appendChild(li);
@@ -83,14 +87,18 @@ function loadActivities() {
 }
 
 // ========== 記録表示 ==========
-function showTopTimes(activity) {
+async function showTopTimes(activity) {
   // 上位3タイムを表示
   const list = document.getElementById('topTimes');
   list.innerHTML = '';
-  const records = getRecordArray().filter(r => r.activity === activity);
-  const top = records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).slice(0, 3);
+  const snapshot = await getDocs(collection(db, "records"));
+  const records = snapshot.docs
+    .map(doc => doc.data())
+    .filter(r => r.activity === activity)
+    .sort((a, b) => parseFloat(a.time) - parseFloat(b.time))
+    .slice(0, 3);
 
-  top.forEach(record => {
+  records.forEach(record => {
     const li = document.createElement('li');
     const formatted = formatTime(parseFloat(record.time) * 1000); // 秒 → ms → 表示形式に変換
     li.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`;
@@ -101,19 +109,22 @@ function showTopTimes(activity) {
   showPage('timerPage');
 }
 
-function showActivityRecords(activity, highlightLast = false) {
+async function showActivityRecords(activity, highlightLast = false) {
   // 特定の活動の全記録を表示（必要なら最後の記録をハイライト）
   const list = document.getElementById('activityRecordList');
   list.innerHTML = '';
-  const records = getRecordArray().filter(r => r.activity === activity);
+
+  const snapshot = await getDocs(collection(db, "records"));
+  const allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(r => r.activity === activity);
 
   // レコード登録時の場合、最新の日付を取得
   let newestTime = 0;
   if (highlightLast) {
-    newestTime = Math.max(...records.map(r => new Date(r.date).getTime()));
+    newestTime = Math.max(...allRecords.map(r => new Date(r.date).getTime()));
   }
 
-  records.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).forEach(record => {
+  allRecords.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).forEach(record => {
     const li = document.createElement('li');
 
     // タイムを表示
@@ -127,7 +138,9 @@ function showActivityRecords(activity, highlightLast = false) {
     const delBtn = document.createElement('button');
     delBtn.classList.add('deleteBtn');
     delBtn.textContent = '削除'; // 表示名
-    delBtn.onclick = () => deleteRecord(activity, record);  //押下時の挙動設定
+    delBtn.onclick = async () => {//押下時の挙動設定
+      await deleteRecord(activity, record);
+    };
     li.appendChild(delBtn);
 
     // レコード登録時で最新の日付の場合
@@ -143,17 +156,17 @@ function showActivityRecords(activity, highlightLast = false) {
 }
 
 // ========== 活動管理 ==========
-function addActivity() {
+async function addActivity() {
   // 新規活動を登録
   const input = document.getElementById('newActivity');
   const name = input.value.trim();
   if (!name) return;
 
-  const activities = JSON.parse(localStorage.getItem('activities')) || [];
-  if (!activities.includes(name)) {
-    activities.push(name);
-    localStorage.setItem('activities', JSON.stringify(activities));
-    loadActivities();
+  const snapshot = await getDocs(collection(db, "activities"));
+  const exists = snapshot.docs.some(doc => doc.data().name === name);
+  if (!exists) {
+    await addDoc(collection(db, "activities"), { name });
+    await loadActivities();
   }
   input.value = '';
 }
@@ -225,14 +238,16 @@ function resumeTimer() {
   document.getElementById('resetBtn').style.display = 'none';
 }
 
-function saveRecord() {
+async function saveTimer() {
   // 記録を保存
   const date = new Date().toLocaleString();
   const seconds = elapsedTime / 1000;
 
-  const records = getRecordArray();
-  records.push({ activity: currentActivity, time: seconds, date });
-  localStorage.setItem('records', JSON.stringify(records));
+  await addDoc(collection(db, "records"), {
+    activity: currentActivity,
+    time: seconds,
+    date: date
+  });
 
   // タイマーリセット
   resetTimer();
@@ -266,32 +281,54 @@ function backToTimer() {
 }
 
 // 活動削除
-function deleteActivity(name) {
+async function deleteActivity(name) {
   if (!confirm(`活動「${name}」と、その記録を削除すると復元できません。実行しますか？`)) return;
 
-  // 活動を削除
-  let activities = JSON.parse(localStorage.getItem('activities')) || [];
-  activities = activities.filter(a => a !== name);
-  localStorage.setItem('activities', JSON.stringify(activities));
+  // activities コレクションから活動を削除
+  const actSnap = await getDocs(collection(db, "activities"));
+  const actDoc = actSnap.docs.find(doc => doc.data().name === name);
+  if (actDoc) {
+    await deleteDoc(doc(db, "activities", actDoc.id));
+  }
 
-  // 関連記録も削除
-  let records = getRecordArray();
-  records = records.filter(r => r.activity !== name);
-  localStorage.setItem('records', JSON.stringify(records));
+  // records コレクションからその活動に属する記録を削除
+  const recSnap = await getDocs(collection(db, "records"));
+  const deletePromises = recSnap.docs
+    .filter(doc => doc.data().activity === name)
+    .map(doc => deleteDoc(doc.ref));
+
+  await Promise.all(deletePromises);
 
   // 表示更新
-  loadActivities();
+  await loadActivities();
 }
 
 // タイム削除
-function deleteRecord(activity, target) {
+async function deleteRecord(activity, target) {
   if (!confirm("この記録を削除すると復元できません。実行しますか？")) return;
 
-  let records = getRecordArray();
   // 活動名＋日時が一致する記録だけ除外して保存し直す
-  records = records.filter(r => !(r.activity === activity && r.time === target.time && r.date === target.date));
-  localStorage.setItem('records', JSON.stringify(records));
+  const snap = await getDocs(collection(db, "records"));
+  const targetDoc = snap.docs.find(doc => {
+    const data = doc.data();
+    return data.activity === activity && data.time === target.time && data.date === target.date;
+  });
 
-  // 再描画
-  showActivityRecords(activity);
+  if (targetDoc) {
+    await deleteDoc(doc(db, "records", targetDoc.id));
+    showActivityRecords(activity); // 再描画
+  }
 }
+
+// HTMLから呼び出す関数を明示的に登録
+window.startTimer = startTimer;
+window.stopTimer = stopTimer;
+window.resumeTimer = resumeTimer;
+window.resetTimer = resetTimer;
+window.backTodetailPage = backTodetailPage;
+window.backToTimer = backToTimer;
+window.addActivity = addActivity;
+const globalFunctions = {
+  showPage, addActivity, startTimer, stopTimer, resumeTimer, saveTimer, resetTimer, backTodetailPage, backToTimer
+};
+Object.assign(window, globalFunctions);
