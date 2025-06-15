@@ -1,18 +1,16 @@
 // ================================
-// 活動記録タイマー - ロジック編（仕様変更対応版）
+// 活動記録タイマー
 // ================================
+
+// firebase-init.js を読み込む
+import "./firebase-init.js";
+// Firestore 関連の操作関数を個別に import
 import {
-  collection,
-  getDocs,
-  addDoc,
-  deleteDoc,
-  doc,
-  query,
-  orderBy,
-  getFirestore,
+  collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 const db = window.firebaseDB;
+const auth = window.firebaseAuth;
 
 let startTime; // タイマーの開始時刻
 let elapsedTime = 0; // 経過時間（ms）
@@ -21,11 +19,11 @@ let timerInterval; // リアルタイム表示用 setInterval の識別子
 let currentActivity = null; // 現在選択されている活動
 let currentPageId = "homePage"; // 現在表示されているページID
 
-// ページ読み込み時の初期化処理
-window.onload = async () => {
+// 認証状態に変更があった場合の初期化処理
+window.addEventListener("auth-ready", async () => {
   await loadActivities(); // 活動一覧の読み込み
   updateTimerDisplay(0); // タイマー初期表示を0で統一（0h00m00s<small>00</small>）
-};
+});
 
 // ========== ページ切り替え ==========
 function showPage(id) {
@@ -45,7 +43,9 @@ async function loadActivities() {
   // 活動リストとセレクトボックスを再描画
   const list = document.getElementById('activityList');
   const allList = document.getElementById('allActivityList');
-  const snapshot = await getDocs(collection(db, "activities"));
+  const snapshot = await getDocs(
+    query(collection(db, "activities"), where("userId", "==", auth.currentUser.uid))
+  );
 
   if (list) list.innerHTML = '';
   if (allList) allList.innerHTML = '';
@@ -91,7 +91,9 @@ async function showTopTimes(activity) {
   // 上位3タイムを表示
   const list = document.getElementById('topTimes');
   list.innerHTML = '';
-  const snapshot = await getDocs(collection(db, "records"));
+  const snapshot = await getDocs(
+    query(collection(db, "records"), where("userId", "==", auth.currentUser.uid))
+  );
   const records = snapshot.docs
     .map(doc => doc.data())
     .filter(r => r.activity === activity)
@@ -113,8 +115,9 @@ async function showActivityRecords(activity, highlightLast = false) {
   // 特定の活動の全記録を表示（必要なら最後の記録をハイライト）
   const list = document.getElementById('activityRecordList');
   list.innerHTML = '';
-
-  const snapshot = await getDocs(collection(db, "records"));
+  const snapshot = await getDocs(
+    query(collection(db, "records"), where("userId", "==", auth.currentUser.uid))
+  );
   const allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
     .filter(r => r.activity === activity);
 
@@ -157,6 +160,11 @@ async function showActivityRecords(activity, highlightLast = false) {
 
 // ========== 活動管理 ==========
 async function addActivity() {
+console.log("現在のUID:", auth.currentUser?.uid);
+  if (!auth.currentUser) {
+    alert("まだ認証が完了していません。少し待ってからもう一度試してください。");
+    return;
+  }
   // 新規活動を登録
   const input = document.getElementById('newActivity');
   const name = input.value.trim();
@@ -165,7 +173,13 @@ async function addActivity() {
   const snapshot = await getDocs(collection(db, "activities"));
   const exists = snapshot.docs.some(doc => doc.data().name === name);
   if (!exists) {
-    await addDoc(collection(db, "activities"), { name });
+
+console.log("追加直前の userId:", auth.currentUser.uid);
+
+    await addDoc(collection(db, "activities"), { 
+      name,
+      userId: auth.currentUser.uid
+    });
     await loadActivities();
   }
   input.value = '';
@@ -246,7 +260,8 @@ async function saveTimer() {
   await addDoc(collection(db, "records"), {
     activity: currentActivity,
     time: seconds,
-    date: date
+    date: date,
+    userId: auth.currentUser.uid
   });
 
   // タイマーリセット
@@ -285,8 +300,10 @@ async function deleteActivity(name) {
   if (!confirm(`活動「${name}」と、その記録を削除すると復元できません。実行しますか？`)) return;
 
   // activities コレクションから活動を削除
-  const actSnap = await getDocs(collection(db, "activities"));
-  const actDoc = actSnap.docs.find(doc => doc.data().name === name);
+  const snapshot = await getDocs(
+    query(collection(db, "activities"), where("userId", "==", auth.currentUser.uid))
+  );
+  const actDoc = snapshot.docs.find(doc => doc.data().name === name);
   if (actDoc) {
     await deleteDoc(doc(db, "activities", actDoc.id));
   }
@@ -308,8 +325,10 @@ async function deleteRecord(activity, target) {
   if (!confirm("この記録を削除すると復元できません。実行しますか？")) return;
 
   // 活動名＋日時が一致する記録だけ除外して保存し直す
-  const snap = await getDocs(collection(db, "records"));
-  const targetDoc = snap.docs.find(doc => {
+  const snapshot = await getDocs(
+    query(collection(db, "records"), where("userId", "==", auth.currentUser.uid))
+  );
+  const targetDoc = snapshot.docs.find(doc => {
     const data = doc.data();
     return data.activity === activity && data.time === target.time && data.date === target.date;
   });
@@ -321,13 +340,6 @@ async function deleteRecord(activity, target) {
 }
 
 // HTMLから呼び出す関数を明示的に登録
-window.startTimer = startTimer;
-window.stopTimer = stopTimer;
-window.resumeTimer = resumeTimer;
-window.resetTimer = resetTimer;
-window.backTodetailPage = backTodetailPage;
-window.backToTimer = backToTimer;
-window.addActivity = addActivity;
 const globalFunctions = {
   showPage, addActivity, startTimer, stopTimer, resumeTimer, saveTimer, resetTimer, backTodetailPage, backToTimer
 };
