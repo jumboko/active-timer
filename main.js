@@ -160,27 +160,24 @@ async function showActivityRecords(activity, highlightLast = false) {
 
 // ========== 活動管理 ==========
 async function addActivity() {
-console.log("現在のUID:", auth.currentUser?.uid);
-  if (!auth.currentUser) {
-    alert("まだ認証が完了していません。少し待ってからもう一度試してください。");
-    return;
-  }
   // 新規活動を登録
   const input = document.getElementById('newActivity');
   const name = input.value.trim();
   if (!name) return;
 
-  const snapshot = await getDocs(collection(db, "activities"));
+  const snapshot = await getDocs(
+    query(collection(db, "activities"), where("userId", "==", auth.currentUser.uid))
+  );
   const exists = snapshot.docs.some(doc => doc.data().name === name);
   if (!exists) {
-
-console.log("追加直前の userId:", auth.currentUser.uid);
 
     await addDoc(collection(db, "activities"), { 
       name,
       userId: auth.currentUser.uid
     });
     await loadActivities();
+  } else {
+    alert('同名の活動を登録済みです');
   }
   input.value = '';
 }
@@ -309,7 +306,9 @@ async function deleteActivity(name) {
   }
 
   // records コレクションからその活動に属する記録を削除
-  const recSnap = await getDocs(collection(db, "records"));
+  const recSnap = await getDocs(
+    query(collection(db, "records"), where("userId", "==", auth.currentUser.uid))
+  );
   const deletePromises = recSnap.docs
     .filter(doc => doc.data().activity === name)
     .map(doc => deleteDoc(doc.ref));
