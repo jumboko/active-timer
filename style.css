@@ -40,6 +40,19 @@ button {
   /*background: yellow; /* 背景色 */
 }
 
+/* ポップアップ時のオーバーレイ */
+#overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  cursor: wait;
+}
+
 /* ========== 画面切り替え用スタイル ========== */
 
 /* デフォルトで全てのページを非表示に */

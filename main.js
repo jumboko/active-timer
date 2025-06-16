@@ -9,8 +9,9 @@ import {
   collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-const db = window.firebaseDB;
-const auth = window.firebaseAuth;
+// ??????????????????????????????????????????????????????????????
+//const db = window.db;
+//const auth = window.auth;
 
 let startTime; // タイマーの開始時刻
 let elapsedTime = 0; // 経過時間（ms）
@@ -21,6 +22,7 @@ let currentPageId = "homePage"; // 現在表示されているページID
 
 // 認証状態に変更があった場合の初期化処理
 window.addEventListener("auth-ready", async () => {
+console.log("画面初期化");
   await loadActivities(); // 活動一覧の読み込み
   updateTimerDisplay(0); // タイマー初期表示を0で統一（0h00m00s<small>00</small>）
 });

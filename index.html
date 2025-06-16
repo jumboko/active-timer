@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <title>活動記録タイマー</title>
   <link rel="stylesheet" href="style.css" />
+  <div id="authStatus">
+    <button onclick="loginWithGoogle()">ログイン（Google）</button>
+    <span id="userInfo" style="display: none;"></span>
+    <button onclick="logout()" style="display: none;">ログアウト</button>
+  </div>
 </head>
 <body>
 
@@ -57,6 +62,9 @@
     <button onclick="backToTimer()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
   </div>
 
+  <div id="overlay"></div>
+
+  <!-- js 最後に書くことでhtmlの読み込みを優先 -->
   <script type="module" src="./firebase-init.js"></script>
   <script type="module" src="./main.js"></script>
 </body>
