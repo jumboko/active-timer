@@ -321,7 +321,7 @@ async function deleteActivity(name) {
   await loadActivities();
 }
 
-// タイム削除
+// タイム記録削除
 async function deleteRecord(activity, target) {
   if (!confirm("この記録を削除すると復元できません。実行しますか？")) return;
 
