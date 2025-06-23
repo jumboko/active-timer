@@ -27,6 +27,11 @@
   <div id="recordPage" class="page">
     <h2><ruby>活動<rt>かつどう</rt></ruby>を<ruby>選択<rt>せんたく</rt></ruby></h2>
     <input type="text" id="newActivity" placeholder="新しい活動名" />
+    <label for="recordOrder">並び順：</label>
+      <select id="recordOrder">
+        <option value="asc">昇順（短い→長い）</option>
+        <option value="desc" selected>降順（長い→短い）</option>
+      </select>
     <button onclick="addActivity()"><ruby>追加<rt>ついか</rt></ruby></button>
     <ul id="activityList"></ul>
     <button onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>

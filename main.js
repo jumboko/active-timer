@@ -5,9 +5,7 @@
 // firebase-init.js を読み込む
 import "./firebase-init.js";
 // Firestore 関連の操作関数を個別に import
-import {
-  collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, where
-} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { getQueryData, addQueryData, deleteQueryData } from './dataMerge.js';
 
 // ??????????????????????????????????????????????????????????????
 //const db = window.db;
@@ -45,15 +43,13 @@ async function loadActivities() {
   // 活動リストとセレクトボックスを再描画
   const list = document.getElementById('activityList');
   const allList = document.getElementById('allActivityList');
-  const snapshot = await getDocs(
-    query(collection(db, "activities"), where("userId", "==", auth.currentUser.uid))
-  );
+  const snapshot = await getQueryData("activities", {userId: auth.currentUser.uid});
 
   if (list) list.innerHTML = '';
   if (allList) allList.innerHTML = '';
 
   snapshot.forEach(docSnap => {
-    const activity = docSnap.data().name;
+    const activity = docSnap.actName;
 
     // 活動リストに追加し、クリックでタイマー画面へ遷移
     if (list) {
@@ -93,15 +89,17 @@ async function showTopTimes(activity) {
   // 上位3タイムを表示
   const list = document.getElementById('topTimes');
   list.innerHTML = '';
-  const snapshot = await getDocs(
-    query(collection(db, "records"), where("userId", "==", auth.currentUser.uid))
-  );
-  const records = snapshot.docs
-    .map(doc => doc.data())
-    .filter(r => r.activity === activity)
-    .sort((a, b) => parseFloat(a.time) - parseFloat(b.time))
-    .slice(0, 3);
 
+  // 活動データから並び順（recOrder）を取得
+  const activitySnap = await getQueryData("activities", {userId: auth.currentUser.uid, actName: activity});
+  const order = activitySnap[0]?.recOrder || "desc";// デフォルトは「降順」
+
+  // 記録の取得・フィルタリング
+  const records = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
+
+  records.sort((a, b) => order === "asc" ? a.time - b.time : b.time - a.time).slice(0, 3); // ソートし上位3件取得
+
+  // 表示処理
   records.forEach(record => {
     const li = document.createElement('li');
     const formatted = formatTime(parseFloat(record.time) * 1000); // 秒 → ms → 表示形式に変換
@@ -117,21 +115,26 @@ async function showActivityRecords(activity, highlightLast = false) {
   // 特定の活動の全記録を表示（必要なら最後の記録をハイライト）
   const list = document.getElementById('activityRecordList');
   list.innerHTML = '';
-  const snapshot = await getDocs(
-    query(collection(db, "records"), where("userId", "==", auth.currentUser.uid))
-  );
-  const allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-    .filter(r => r.activity === activity);
 
-  // レコード登録時の場合、最新の日付を取得
+  // 活動データから並び順（recOrder）を取得
+  const activitySnap = await getQueryData("activities", {userId: auth.currentUser.uid, actName: activity});
+  const order = activitySnap[0]?.recOrder || "desc";// デフォルトは「降順」
+
+  // 記録取得
+  const allRecords = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
+
+  // レコード登録時の場合、最新の日付を取得（ハイライト用）
   let newestTime = 0;
   if (highlightLast) {
     newestTime = Math.max(...allRecords.map(r => new Date(r.date).getTime()));
   }
 
-  allRecords.sort((a, b) => parseFloat(a.time) - parseFloat(b.time)).forEach(record => {
-    const li = document.createElement('li');
+  // 並び替えて表示
+  allRecords.sort((a, b) => order === "asc" ? a.time - b.time : b.time - a.time);
 
+  // 表示処理
+  allRecords.forEach(record => {
+    const li = document.createElement('li');
     // タイムを表示
     const span = document.createElement('span');
     span.classList.add('recordText');
@@ -165,19 +168,18 @@ async function addActivity() {
   // 新規活動を登録
   const input = document.getElementById('newActivity');
   const name = input.value.trim();
-  if (!name) return;
+  if (!name) return; // 空欄の場合何もしない
 
-  const snapshot = await getDocs(
-    query(collection(db, "activities"), where("userId", "==", auth.currentUser.uid))
-  );
-  const exists = snapshot.docs.some(doc => doc.data().name === name);
-  if (!exists) {
-
-    await addDoc(collection(db, "activities"), { 
-      name,
-      userId: auth.currentUser.uid
+  // 活動名を既に登録済みか確認
+  const existing = await getQueryData("activities", {userId: auth.currentUser.uid, actName: name});
+  if (existing.length === 0) {
+    // 新たな活動名を登録
+    await addQueryData("activities", {
+      actName: name,
+      userId: auth.currentUser.uid,
+      recOrder: document.getElementById("recordOrder").value //昇順、降順を取得
     });
-    await loadActivities();
+    await loadActivities(); // 画面を更新
   } else {
     alert('同名の活動を登録済みです');
   }
@@ -253,13 +255,10 @@ function resumeTimer() {
 
 async function saveTimer() {
   // 記録を保存
-  const date = new Date().toLocaleString();
-  const seconds = elapsedTime / 1000;
-
-  await addDoc(collection(db, "records"), {
-    activity: currentActivity,
-    time: seconds,
-    date: date,
+  await addQueryData("records", {
+    actName: currentActivity,
+    time: elapsedTime / 1000,
+    date: new Date().toLocaleString(),
     userId: auth.currentUser.uid
   });
 
@@ -298,24 +297,18 @@ function backToTimer() {
 async function deleteActivity(name) {
   if (!confirm(`活動「${name}」と、その記録を削除すると復元できません。実行しますか？`)) return;
 
-  // activities コレクションから活動を削除
-  const snapshot = await getDocs(
-    query(collection(db, "activities"), where("userId", "==", auth.currentUser.uid))
-  );
-  const actDoc = snapshot.docs.find(doc => doc.data().name === name);
-  if (actDoc) {
-    await deleteDoc(doc(db, "activities", actDoc.id));
+  // activities コレクションから活動のdocIdを取得
+  const actDoc = await getQueryData("activities", {userId: auth.currentUser.uid, actName: name});
+
+  if (actDoc[0]) {
+     // ユーザで活動は重複しない為、1件削除
+    await deleteQueryData("activities", actDoc[0].id);
   }
 
-  // records コレクションからその活動に属する記録を削除
-  const recSnap = await getDocs(
-    query(collection(db, "records"), where("userId", "==", auth.currentUser.uid))
-  );
-  const deletePromises = recSnap.docs
-    .filter(doc => doc.data().activity === name)
-    .map(doc => deleteDoc(doc.ref));
-
-  await Promise.all(deletePromises);
+  // records コレクションからその活動に属する記録を削除???????????????????????????????????????????????????こっちはifいらんの？
+  const recSnaps = await getQueryData("records", {userId: auth.currentUser.uid, actName: name});
+  const deletePromises = recSnaps.map(r => deleteQueryData("records", r.id));
+  await Promise.all(deletePromises); // 削除終了まで待機
 
   // 表示更新
   await loadActivities();
@@ -326,17 +319,21 @@ async function deleteRecord(activity, target) {
   if (!confirm("この記録を削除すると復元できません。実行しますか？")) return;
 
   // 活動名＋日時が一致する記録だけ除外して保存し直す
-  const snapshot = await getDocs(
-    query(collection(db, "records"), where("userId", "==", auth.currentUser.uid))
-  );
-  const targetDoc = snapshot.docs.find(doc => {
-    const data = doc.data();
-    return data.activity === activity && data.time === target.time && data.date === target.date;
-  });
+  const recSnaps = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
+  const targetDoc = recSnaps.find(data =>data.time === target.time && data.date === target.date);
 
   if (targetDoc) {
-    await deleteDoc(doc(db, "records", targetDoc.id));
-    showActivityRecords(activity); // 再描画
+    await deleteQueryData("records", targetDoc.id);
+    // DOM から該当 li を削除（innerHTML='' を使わない）
+    const list = document.getElementById('activityRecordList');
+    const allLis = Array.from(list.children);
+
+    const liToRemove = allLis.find(li =>
+      li.innerText.includes(target.date) && li.innerText.includes(formatTime(target.time * 1000).text)
+    );
+
+    // htmlに表示のリストから削除した記録を除く
+    if (liToRemove) liToRemove.remove();
   }
 }
 

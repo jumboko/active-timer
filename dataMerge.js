@@ -17,16 +17,16 @@ export async function mergeUserData(anonActivities, anonRecords, googleActNames,
   // 匿名アクティビティが存在する場合、1件ずつ処理
   for (const anonAct of anonActivities) {
     // googleアカウントに記録を登録する活動名を設定
-    let  setActname = anonAct.name;
+    let  setActname = anonAct.actName;
 
     // 登録をスキップしない場合（重複なし、または重複分を分ける選択の場合）※マージする場合に活動名重複の時のみスキップ
     if (!dupActNames.includes(setActname)) {
       // 名称の重複回避のため活動名を更新
-       setActname = getUniqueName(anonAct.name, googleActNames);
+       setActname = getUniqueName(anonAct.actName, googleActNames);
     
       // 新しいアクティビティ名を登録
       await addDoc(collection(db, "activities"), {
-        name: setActname,
+        actName: setActname,
         userId: googleUid,
       });
 
@@ -37,33 +37,18 @@ export async function mergeUserData(anonActivities, anonRecords, googleActNames,
     }
 
     // 取得中の匿名アクティビティに対応する匿名の記録一覧を取得
-    const anonActRecs = anonRecords.filter(r => r.activity === anonAct.name);
+    const anonActRecs = anonRecords.filter(r => r.actName=== anonAct.actName);
     // 記録一覧を1件ずつ処理(活動名重複を分けない場合もそのまま登録)
     for (const rec of anonActRecs) {
       // レコードを保存
       await addDoc(collection(db, "records"), {
-        activity: setActname,
+        actName: setActname,
         time: rec.time,
         date: rec.date,
         userId: googleUid,
       });
     }
   }
-}
-
-// Firestore の任意のコレクションから、指定された複数のフィールド条件（where句）に一致するデータを取得する。
-export async function getQueryData(collectionName, filters = {}) {
-  // データ取得
-  const snap = await getDocs(query(
-    collection(db, collectionName),
-    ...Object.entries(filters).map(([field, value]) => where(field, "==", value))
-  ));
-
-  // snap.idとsnap.data().[項目]を一纏めにし返す(snap.idは削除更新に使用)
-  return snap.docs.map(doc => ({
-    id: doc.id,         // ドキュメントID
-    ...doc.data(),      // activity, time, date, userId など
-  }));
 }
 
 // 既存名称をもとに、重複しない名称を生成する。
@@ -138,7 +123,37 @@ export async function deleteCollectionByUser(collectionName, uid) {
 }
 
 /**
- * Firestore の指定コレクションからドキュメントIDで1件削除する
+ * Firestore の任意のコレクションから、指定された複数のフィールド条件（where句）に一致するデータを取得する。
+ * @param {string} collectionName - "activities" や "records" などのコレクション名
+ * @param {Object} filters - 取得条件のフィールドと値の組（例: { userId: ..., actName: ... }）
+ * @returns {Promise<Array<Object>>} 各ドキュメントの { id, ...データ } を配列で返す
+ */
+export async function getQueryData(collectionName, filters = {}) {
+  // データ取得
+  const snap = await getDocs(query(
+    collection(db, collectionName),
+    ...Object.entries(filters).map(([field, value]) => where(field, "==", value))
+  ));
+
+  // snap.idとsnap.data().[項目]を一纏めにし返す(snap.idは削除更新に使用)
+  return snap.docs.map(doc => ({
+    id: doc.id,         // ドキュメントID
+    ...doc.data(),      // activity, time, date, userId など
+  }));
+}
+
+/**
+ * Firestore の指定コレクションへ、指定されたデータを新規ドキュメントとして登録する。
+ * @param {string} collectionName - "activities" や "records" などのコレクション名
+ * @param {Object} rawData - 登録するフィールドのデータ（例: { actName, userId, ... }）
+ * @returns {Promise<DocumentReference>} 登録されたドキュメントの参照を返す（await 可能）
+ */
+export async function addQueryData(colName, rawData = {}) {
+  return await addDoc(collection(db, colName), { ...rawData });
+}
+
+/**
+ * Firestore の指定コレクションからドキュメントIDで1件削除する  ???????????????????????????????????????????トライキャッチは最終的に消す？
  * @param {string} collectionName - "activities" や "records" などのコレクション名
  * @param {string} docId - 削除対象のドキュメントID
  * @returns {Promise<void>} 削除処理の Promise を返す（await 可能に）

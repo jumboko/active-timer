@@ -139,10 +139,10 @@ export async function loginWithGoogle() {
               // googleユーザの活動データ一覧を取得
               const googleActivities = await getQueryData("activities", { userId: result.user.uid });
               // Googleアクティビティ名一覧を取得（重複チェック用）
-              const googleActNames = googleActivities.map(act => act.name);
+              const googleActNames = googleActivities.map(act => act.actName);
 
               // 匿名ユーザとgoogleユーザで重複している活動名の一覧を取得
-              let dupActNames = anonActivities.map(act => act.name).filter(name => googleActNames.includes(name));
+              let dupActNames = anonActivities.map(act => act.actName).filter(name => googleActNames.includes(name));
               // 重複がある場合
               if (dupActNames.length > 0) {
                 const sepFlg = !confirm(
