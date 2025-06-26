@@ -6,65 +6,84 @@
 import {
   collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { validateFields } from './validation.js';
 
-// 匿名ユーザーのデータをGoogleアカウントへマージする。活動名重複の扱いは引数で制御。
+// inputデータを既存アカウントへマージする。活動名重複の扱いは引数で制御。
 // 重複対象無　　　　　　　　　　　全てinput
 // 重複対象有 &　マージせず分ける　全てinput
 // 重複対象有 &　マージする　　　　一部input(重複活動名はスルー)
-export async function mergeUserData(anonActivities, anonRecords, googleActNames, dupActNames) {
-  const googleUid = auth.currentUser.uid; // 再ログイン後のUIDを使用
+export async function mergeUserData(inputActivities, inputRecords, currentActNames, dupActNames) {
+  const currentUid = auth.currentUser.uid; // 再ログイン後のUIDを使用
+  // 並列でまとめて登録用の変数
+  const actAdds = []; 
+  const recAdds = [];
 
-  // 匿名アクティビティが存在する場合、1件ずつ処理
-  for (const anonAct of anonActivities) {
-    // googleアカウントに記録を登録する活動名を設定
-    let  setActname = anonAct.actName;
+    // 既存レコードを取得（重複チェック用）
+  const currentRecords = await getQueryData("records", { userId: currentUid });
 
-    // 登録をスキップしない場合（重複なし、または重複分を分ける選択の場合）※マージする場合に活動名重複の時のみスキップ
-    if (!dupActNames.includes(setActname)) {
+  // inputアクティビティが存在する場合、1件ずつ処理
+  for (const inputAct of inputActivities) {
+    // 既存アカウントに記録を登録する活動名を設定
+    let  setActName = inputAct.actName;
+
+    // 登録をスキップしない場合（重複なし、または重複分を分ける選択の場合）※マージする場合で活動名重複時のみスキップ
+    if (!dupActNames.includes(setActName)) {
       // 名称の重複回避のため活動名を更新
-       setActname = getUniqueName(anonAct.actName, googleActNames);
+       setActName = getUniqueName(inputAct.actName, currentActNames);
     
-      // 新しいアクティビティ名を登録
-      await addDoc(collection(db, "activities"), {
-        actName: setActname,
-        userId: googleUid,
-      });
+      // 新たな活動を追加（あとでまとめて Promise.all）
+      actAdds.push(addQueryData("activities", {
+        actName: setActName,
+        userId: currentUid
+      }));
 
-      // 名前が重複しないようにリストに追加しておく
-      if (!googleActNames.includes(setActname)) {
-        googleActNames.push(setActname);
+      // 名前が重複しないようにリストに追加
+      currentActNames.push(setActName);
+    }
+
+    // 取得中のinputアクティビティに対応する記録一覧を取得
+    const inputActRecs = inputRecords.filter(r => r.actName=== inputAct.actName);
+    // 記録一覧を1件ずつ処理(活動名重複を分けない場合もそのまま登録)
+    for (const rec of inputActRecs) {
+      // 既存レコード一覧に完全重複のinput記録が1件でも存在するかを確認
+      const dupFlg = currentRecords.some(cr =>
+        cr.actName === setActName &&
+        cr.date === rec.date &&
+        cr.time === rec.time
+      );
+
+      // 重複がない場合
+      if (!dupFlg) {
+        // 記録を追加（あとでまとめて Promise.all）
+        recAdds.push(addQueryData("records", {
+          actName: setActName,
+          time: rec.time,
+          date: rec.date,
+          userId: currentUid
+        }));
+      } else {
+        console.log(`⏭ 重複スキップ: ${setActName} (${rec.date}, ${rec.time}s)`); // 処理の遅延会費で削除検討？？？？？？？？？？？？
       }
     }
-
-    // 取得中の匿名アクティビティに対応する匿名の記録一覧を取得
-    const anonActRecs = anonRecords.filter(r => r.actName=== anonAct.actName);
-    // 記録一覧を1件ずつ処理(活動名重複を分けない場合もそのまま登録)
-    for (const rec of anonActRecs) {
-      // レコードを保存
-      await addDoc(collection(db, "records"), {
-        actName: setActname,
-        time: rec.time,
-        date: rec.date,
-        userId: googleUid,
-      });
-    }
   }
+  // 並列でまとめて登録（activities + records）
+  await Promise.all([...actAdds, ...recAdds]);
 }
 
 // 既存名称をもとに、重複しない名称を生成する。
-export function getUniqueName(baseName, existingNames) {
+export function getUniqueName(checkName, currentNames) {
   // そのまま使えるかチェック
-  if (!existingNames.includes(baseName)) {
-    return baseName;
+  if (!currentNames.includes(checkName)) {
+    return checkName;
   }
 
   // "活動名 (1)", "活動名 (2)", ... と重複しない名前を探す
   let counter = 1;
   let candidateName;
   do {
-    candidateName = `${baseName}(${counter})`;
+    candidateName = `${checkName}(${counter})`;
     counter++;
-  } while (existingNames.includes(candidateName));
+  } while (currentNames.includes(candidateName));
 
   return candidateName; // 重複しない名前が見つかったら返す
 }
@@ -144,12 +163,23 @@ export async function getQueryData(collectionName, filters = {}) {
 
 /**
  * Firestore の指定コレクションへ、指定されたデータを新規ドキュメントとして登録する。
+ * - validateFields() で必須項目の存在と補完をチェック
+ * - userId や recOrder などもここで自動補完
+ * - 不正なデータはスキップ（null時）
+ * 
  * @param {string} collectionName - "activities" や "records" などのコレクション名
  * @param {Object} rawData - 登録するフィールドのデータ（例: { actName, userId, ... }）
- * @returns {Promise<DocumentReference>} 登録されたドキュメントの参照を返す（await 可能）
+ * @returns {Promise<DocumentReference|undefined>} Firestoreへの追加結果（失敗時は何も返さない）
  */
-export async function addQueryData(colName, rawData = {}) {
-  return await addDoc(collection(db, colName), { ...rawData });
+export async function addQueryData(collectionName, data = {}) {
+   // 登録データの検証＋補完
+  const validData = validateFields(collectionName, data);
+  if (!validData) {
+    console.warn(`⛔ 無効なデータなので登録スキップ:`, data);
+    return; // 無効データの場合は処理をスキップ
+  }
+  // Firestoreへ登録
+  return await addDoc(collection(db, collectionName), validData);
 }
 
 /**

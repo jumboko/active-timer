@@ -3,7 +3,7 @@
 // ================================
 
 // firebase-init.js を読み込む
-import "./firebase-init.js";
+import { mergeCheck } from "./firebase-init.js";
 // Firestore 関連の操作関数を個別に import
 import { getQueryData, addQueryData, deleteQueryData } from './dataMerge.js';
 
@@ -92,7 +92,7 @@ async function showTopTimes(activity) {
 
   // 活動データから並び順（recOrder）を取得
   const activitySnap = await getQueryData("activities", {userId: auth.currentUser.uid, actName: activity});
-  const order = activitySnap[0]?.recOrder || "desc";// デフォルトは「降順」
+  const order = activitySnap[0]?.recOrder || "asc";// デフォルトは「昇順」
 
   // 記録の取得・フィルタリング
   const records = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
@@ -337,8 +337,88 @@ async function deleteRecord(activity, target) {
   }
 }
 
+
+
+
+
+
+
+
+
+
+// バックアップ機能：activities + records を1つのJSONで保存
+async function downloadBackup() {
+  if (!auth.currentUser?.uid) { // 基本起こりえない
+    alert("ログイン状態が確認できませんでした。もう一度ログインしてください。");
+    return;
+  }
+  const userId = auth.currentUser.uid;
+
+  const bkFlg = confirm("データをバックアップしますか？"); // メッセージポップアップ
+  if (!bkFlg) {return;} //キャンセルの場合は何もしない
+
+  // Firestoreからデータ取得
+  const [activities, records] = await Promise.all([
+    getQueryData("activities", { userId }),
+    getQueryData("records", { userId }),
+  ]);
+
+  const data = {
+    activities,
+    records,
+    exportedAt: new Date().toISOString(),
+  };
+
+  // JSON化してダウンロード
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `activityTimer_backup-${new Date().toISOString().split("T")[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// インポート処理：JSONファイル読み込み＆登録
+async function handleImportFile(event) {
+  const input = document.getElementById("importFile"); // ← input 要素の参照
+  const file = input.files[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const backupData = JSON.parse(text);
+
+    // ログイン状態の確認
+    if (!auth.currentUser?.uid) { // 基本起こりえない
+      alert("ログイン状態が確認できませんでした。もう一度ログインしてください。");
+      return;
+    }
+
+    // インポート対象のデータを取得（存在しない場合は空配列に）
+    const importedActivities = backupData.activities || [];
+    const importedRecords = backupData.records || [];
+
+    // インポート内容を確認（マージ処理へ）
+    const success = await mergeCheck(importedActivities, importedRecords, "import");
+    if (success) {
+      alert("データのインポートが完了しました");
+    } else {
+      alert("インポートはキャンセルされました");
+    }
+    
+  } catch (err) {
+    console.error("❌ インポート中にエラーが発生しました:", err);
+    alert("ファイルの読み込みに失敗しました。形式が正しいか確認してください。");
+  } finally {
+    // 最後に input をクリアして、同じファイルでも再選択可能にする
+    input.value = "";
+  }
+}
+
 // HTMLから呼び出す関数を明示的に登録
 const globalFunctions = {
-  showPage, addActivity, startTimer, stopTimer, resumeTimer, saveTimer, resetTimer, backTodetailPage, backToTimer
+  showPage, addActivity, startTimer, stopTimer, resumeTimer, saveTimer, resetTimer, 
+  backTodetailPage, backToTimer, downloadBackup, handleImportFile 
 };
 Object.assign(window, globalFunctions);

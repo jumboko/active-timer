@@ -21,6 +21,9 @@
     <button onclick="showPage('recordPage')">
       <ruby>活動<rt>かつどう</rt></ruby>を<ruby>記録<rt>きろく</rt></ruby>
     </button>
+    <button onclick="downloadBackup()">バックアップ（JSON）</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="handleImportFile(event)" />
+    <button onclick="document.getElementById('importFile').click()">インポート（JSON）</button>
   </div>
 
   <!-- 活動選択画面 -->

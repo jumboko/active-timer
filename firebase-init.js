@@ -94,7 +94,7 @@ export async function loginWithGoogle() {
   try {
     const result = await linkWithPopup(auth.currentUser, provider);
     console.log("✅ 匿名→Googleに昇格成功:", result.user);
-    // 手動でUI更新
+    // 手動でUI更新(データは匿名から引き継ぐだけで変更はないため画面初期化は不要)
     updateUIForUser(result.user);
   } catch (error) {
     // すでにGoogleアカウントで作られていた場合は signInWithPopup を使う
@@ -107,7 +107,7 @@ export async function loginWithGoogle() {
         try {
           let wasAnonDataFlg = false; // 匿名ユーザでデータ有の場合はtureになる
           let anonActivities = [], anonRecords = [];
-          // 匿名アカウントの場合は、googleに再ログイン後データマージのためデータ取得
+          // 匿名アカウントの場合は、googleに再ログイン後データマージのためデータ取得  ※匿名ログイン以外はアカウント切り替えでマージは不要
           if (auth.currentUser && auth.currentUser.isAnonymous) {
             const anonUid = auth.currentUser.uid;
             anonActivities = await getQueryData("activities", { userId: anonUid });
@@ -130,38 +130,7 @@ export async function loginWithGoogle() {
 
 		      // 🔽 匿名ユーザーでデータ保持の場合、マージの意思確認を行う
 		      if (wasAnonDataFlg) {
-		        const doMerge = confirm(
-		          "匿名ユーザーの活動記録があります。\nGoogleアカウントに引き継ぎますか？\n\nキャンセルすると匿名データは削除されます。"
-		        );
-           
-            // マージする場合に活動名が重複した場合、活動を分けるか統合するかを確認
-		        if (doMerge) {
-              // googleユーザの活動データ一覧を取得
-              const googleActivities = await getQueryData("activities", { userId: result.user.uid });
-              // Googleアクティビティ名一覧を取得（重複チェック用）
-              const googleActNames = googleActivities.map(act => act.actName);
-
-              // 匿名ユーザとgoogleユーザで重複している活動名の一覧を取得
-              let dupActNames = anonActivities.map(act => act.actName).filter(name => googleActNames.includes(name));
-              // 重複がある場合
-              if (dupActNames.length > 0) {
-                const sepFlg = !confirm(
-		              "活動名が重複している可能性があります。\n統合して保存しますか？\n\nキャンセルすると活動を分けて保存します。"
-                );
-                // 分けて保存する場合、重複活動名リストは空にする（すべて登録対象にする）
-                if (sepFlg) {
-                  dupActNames = [];
-                }
-              }
-              //マージ処理
-              await mergeUserData(anonActivities, anonRecords, googleActNames, dupActNames);
-		          console.log("✅ 匿名データをGoogleアカウントにマージしました");
-		        } else {
-		          console.log("🛑 匿名データのマージをユーザーがキャンセルしました");
-		        }
-            
-            // 初期化のためカスタムイベントを dispatch（main.js がこれを待つ）
-            window.dispatchEvent(new Event("auth-ready"));
+            mergeCheck(result.user.uid, anonActivities, anonRecords);
 		      }
 
         } catch (err) {
@@ -180,6 +149,67 @@ export async function loginWithGoogle() {
     document.getElementById("overlay").style.display = "none"; // ← オーバーレイ解除
   }
 }
+
+/**
+ * インポートまたは匿名→Google昇格時のデータマージ確認処理
+ * - 活動名の重複確認・分離対応
+ * - 完了後は auth-ready イベントを発火して UI を再初期化
+ * 
+ * @param {Array} inputActivities - マージ対象のアクティビティ一覧
+ * @param {Array} inputRecords - マージ対象の記録一覧
+ * @param {string} mode - "google"（昇格）または "import"（インポート）
+ * @returns {boolean} - マージが行われたかどうか（キャンセル時は false）
+ */
+export async function mergeCheck(inputActivities, inputRecords, mode ) {
+  try {
+    // 呼び出し元に応じてメッセージ変更
+    let message = "";
+    if (mode === "google") {
+      message = "匿名ユーザーの活動記録があります。\nGoogleアカウントに引き継ぎますか？\n\nキャンセルすると匿名データは削除されます。";
+    } else if (mode === "import") {
+      message = "現在のアカウントにインポートします。\n\nキャンセルするとインポートは中止されます。";
+    }
+    
+    const doMerge = confirm(message); // メッセージポップアップ
+   
+    // マージする場合に活動名が重複した場合、活動を分けるか統合するかを確認
+    if (doMerge) {
+      // 現行ユーザの活動データ一覧を取得
+      const currentActivities = await getQueryData("activities", { userId: auth.currentUser.uid });
+      // 現行ユーザのアクティビティ名一覧を取得（重複チェック用）
+      const currentActNames = currentActivities.map(act => act.actName);
+
+      // inputユーザと現行ユーザで重複している活動名の一覧を取得
+      let dupActNames = inputActivities.map(act => act.actName).filter(name => currentActNames.includes(name));
+      // 重複がある場合
+      if (dupActNames.length > 0) {
+        const sepFlg = !confirm(
+          "活動名が重複している可能性があります。\n統合して保存しますか？\n\nキャンセルすると活動を分けて保存します。"
+        );
+        // 分けて保存する場合、重複活動名リストは空にする（すべて登録対象にする）
+        if (sepFlg) {
+          dupActNames = [];
+        }
+      }
+      //マージ処理
+      await mergeUserData(inputActivities, inputRecords, currentActNames, dupActNames);
+      console.log("✅ 匿名データをGoogleアカウントにマージしました");
+          
+      // 初期化のためカスタムイベントを dispatch（main.js がこれを待つ）
+      window.dispatchEvent(new Event("auth-ready"));
+      return true; // インポート時のアラート設定のため
+
+    } else {
+      console.log("🛑 ユーザーがマージをキャンセルしました");
+      return false; // インポート時のアラート設定のため
+    }
+  } catch (error) {
+    console.error("❌ データマージに失敗:", error);
+    alert("データマージに失敗しました。");
+    return false; // インポート時のアラート設定のため
+  }
+}
+
 
 // ログアウト
 export async function logout() {
