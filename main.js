@@ -98,13 +98,27 @@ async function showTopTimes(activity) {
   // 記録の取得・フィルタリング
   const records = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
 
-  records.sort((a, b) => order === "asc" ? a.time - b.time : b.time - a.time).slice(0, 3); // ソートし上位3件取得
-
+  const top3 = records
+  .sort((a, b) => order === "asc" ? a.time - b.time : b.time - a.time)
+  .slice(0, 3); // ソートし上位3件取得
+  
   // 表示処理
-  records.forEach(record => {
+  top3.forEach((record, index) => {
     const li = document.createElement('li');
-    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒 → ms → 表示形式に変換
-    li.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`;
+
+    // 順位表示
+    const rankSpan = document.createElement('span');
+    rankSpan.classList.add('rank');
+    rankSpan.textContent = `${index + 1}位`;
+    li.appendChild(rankSpan);
+
+    // タイムを表示
+    const recordSpan = document.createElement('span');
+    recordSpan.classList.add('recordText');
+    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
+    recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`; // 表示名
+    li.appendChild(recordSpan);
+
     list.appendChild(li);
   });
   currentActivity = activity;
@@ -119,7 +133,7 @@ async function showActivityRecords(activity, highlightLast = false) {
 
   // 活動データから並び順（recOrder）を取得
   const activitySnap = await getQueryData("activities", {userId: auth.currentUser.uid, actName: activity});
-  const order = activitySnap[0]?.recOrder || "desc";// デフォルトは「降順」
+  const order = activitySnap[0]?.recOrder || "asc";// デフォルトは「昇順」
 
   // 記録取得
   const allRecords = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
@@ -134,14 +148,21 @@ async function showActivityRecords(activity, highlightLast = false) {
   allRecords.sort((a, b) => order === "asc" ? a.time - b.time : b.time - a.time);
 
   // 表示処理
-  allRecords.forEach(record => {
+  allRecords.forEach((record, index) => {
     const li = document.createElement('li');
+
+    // 順位表示
+    const rankSpan = document.createElement('span');
+    rankSpan.classList.add('rank');
+    rankSpan.textContent = `${index + 1}位`;
+    li.appendChild(rankSpan);
+
     // タイムを表示
-    const span = document.createElement('span');
-    span.classList.add('recordText');
+    const recordSpan = document.createElement('span');
+    recordSpan.classList.add('recordText');
     const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
-    span.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`; // 表示名
-    li.appendChild(span);
+    recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`; // 表示名
+    li.appendChild(recordSpan);
 
     // 削除ボタン表示
     const delBtn = document.createElement('button');
@@ -329,12 +350,22 @@ async function deleteRecord(activity, target) {
     const list = document.getElementById('activityRecordList');
     const allLis = Array.from(list.children);
 
+    // 行を削除
     const liToRemove = allLis.find(li =>
       li.innerText.includes(target.date) && li.innerText.includes(formatTime(target.time * 1000).text)
     );
 
-    // htmlに表示のリストから削除した記録を除く
+    // htmlの表示のリストから削除した記録を除く
     if (liToRemove) liToRemove.remove();
+
+    // 順位を再設定
+    const remainingLis = document.querySelectorAll('#activityRecordList li');
+    remainingLis.forEach((li, index) => {
+      const rankSpan = li.querySelector('.rank');
+      if (rankSpan) {
+        rankSpan.textContent = `${index + 1}位`;
+      }
+    });
   }
 }
 

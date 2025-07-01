@@ -3,7 +3,7 @@
 ----------------------------- */
 html{
   background-color: #fdfaf6;     /* 背景色 */
-  padding: 0 1em 2em 1em;          /* 内側の余白：上 | 右 | 下 | 左 */
+  padding: 0 1em 2em 1em;          /* 内側の余白：(上 | 右 | 下 | 左) */
 /*  height: 1000px;   /* 高さ指定 */
 }
 
@@ -35,7 +35,8 @@ body {
   background: #fcefdc;  /* 視認性ある背景色 */
   padding: 1em;           /* 内側の余白 */
   border-bottom: 2px solid #e0c9a6;/* ヘッダー下部に線追加 */
-  position: sticky;       /* スクロールしても画面上部に固定 　ログインボタンをヘッダーに留める効果も*/
+
+  position: sticky;       /* スクロールしても画面上部に固定*/
   top: 0;                 /* position: stickyに掛かり固定位置を最上部に指定 */
   z-index: 1000;          /* positionに掛かり数字が大きいほど前面に表示 念のため？そんなことしなくても全面表示かも */
 }
@@ -191,26 +192,40 @@ li {
   border-radius: 10px;       /* 角を丸くする */
 }
 
-/* 活動名にマウスを合わせたときの演出 */
+/* 活動名 */
 .activityName {
   cursor: pointer; /* カーソルが変わって押せるとわかる */
   text-decoration: underline; /* 下線追加 */
   color: #333;   /* 文字色 */
+  flex: 1;         /* 残りのスペースで横に広がる (活動記録選択画面で削除ボタンの位置を統一するため)*/
 }
 .activityName:hover {
   color: #e76f51;  /* 文字色 */
   text-shadow: 1px 1px 2px #ddd; /* ほんのり影で立体感 */
 }
 
+/* 記録 */
+.recordText {
+  flex: 1;  /* 残りのスペースで横に広がる (活動毎の記録一覧で削除ボタンの位置を統一するため)*/
+}
+
+/* 順位表示 */
+.rank {
+  font-weight: bold;
+  color: #f9844a;
+  padding: 0 0.8em 0 0.6em;       /* 内側の余白：(上 | 右 | 下 | 左)  */
+
+/* 開発用 */
+/*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
 
 /* ----------------------------
   削除ボタンの整列用：横並び＆縦中央揃え
 ----------------------------- */
-#allActivityList li, 
+#allActivityList li,
 #activityRecordList li {
-  display: flex;                   /* 横並びにする（Flexbox）  */
-  justify-content: space-between;  /* 左右に広げて配置する */
-  align-items: center;             /* 垂直方向の中央揃え */
+  display: flex;          /* 横に並べる(配置自由化) */
+  align-items: center;    /* 垂直方向に中央揃え */
 }
 
 .btn-del {
