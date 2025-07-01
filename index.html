@@ -4,26 +4,36 @@
   <meta charset="UTF-8" />
   <title>活動記録タイマー</title>
   <link rel="stylesheet" href="style.css" />
-  <div id="authStatus"><!-- ヘッダーに置いたらだめらしい？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？ -->
-    <button onclick="loginWithGoogle()">ログイン（Google）</button>
-    <span id="userInfo" style="display: none;"></span>
-    <button onclick="logout()" style="display: none;">ログアウト</button>
-  </div>
 </head>
 <body>
+  <!-- ヘッダー表示 -->
+  <header id="mainHeader">
+    <div id="headerInner">
+      <div id="logoArea"><ruby>活動記録<rt>かつどうきろく</rt></ruby>タイマー</div>
+      <div id="authStatus"><div class="authGroup">
+        <button class="btn-auth" onclick="loginWithGoogle()">ログイン</button>
+        <button class="btn-auth" onclick="logout()" style="display: none;">ログアウト</button>
+        <div id="userInfo" style="display: none;">
+          ログイン中：<span class="emailText">user@example.com</span> <!-- ユーザ情報 -->
+        </div>
+      </div></div>
+    </div>
+  </header>
 
   <!-- トップ画面 -->
   <div id="homePage" class="page active">
-    <h1><ruby>活動記録<rt>かつどうきろく</rt></ruby>タイマー</h1>
-    <button onclick="showPage('historyPage');">
+    <button class="btn-main" onclick="showPage('historyPage');">
       <ruby>記録確認<rt>きろくかくにん</rt></ruby>
     </button>
-    <button onclick="showPage('recordPage')">
+    <button class="btn-main" onclick="showPage('recordPage')">
       <ruby>活動<rt>かつどう</rt></ruby>を<ruby>記録<rt>きろく</rt></ruby>
     </button>
-    <button onclick="downloadBackup()">バックアップ（JSON）</button>
-    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="handleImportFile(event)" />
-    <button onclick="document.getElementById('importFile').click()">インポート（JSON）</button>
+    <!-- バックアップ・インポート・ファイル選択エリア -->
+    <div id="backupArea">
+      <button class="btn-sub" onclick="downloadBackup()">バックアップ</button>
+      <button class="btn-sub" onclick="document.getElementById('importFile').click()">インポート</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="handleImportFile(event)" />
+    </div>
   </div>
 
   <!-- 活動選択画面 -->
@@ -35,39 +45,39 @@
         <option value="asc">昇順（短い→長い）</option>
         <option value="desc" selected>降順（長い→短い）</option>
       </select>
-    <button onclick="addActivity()"><ruby>追加<rt>ついか</rt></ruby></button>
+    <button class="btn-add" onclick="addActivity()"><ruby>追加<rt>ついか</rt></ruby></button>
     <ul id="activityList"></ul>
-    <button onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
+    <button class="btn-nav" onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
   </div>
 
   <!-- タイマー画面 -->
   <div id="timerPage" class="page">
     <h2 id="timerTitle">活動名のタイマー</h2>
     <p id="timeDisplay">0h00m00s<small>00</small></p>
-    <button onclick="startTimer()" id = "startBtn">スタート</button>
-    <button onclick="stopTimer()" id = "stopBtn" style="display: none">ストップ</button>
-    <button onclick="resumeTimer()" id = "resumeBtn" style="display: none"><ruby>再開<rt>さいかい</rt></ruby></button>
-    <button onclick="saveTimer()" id = "saveBtn" style="display: none"><ruby>登録<rt>とうろく</rt></ruby></button>
-    <button onclick="resetTimer()" id = "resetBtn" style="display: none">リセット</button>
+    <button class="btn-timer" onclick="startTimer()" id = "startBtn">スタート</button>
+    <button class="btn-timer" onclick="stopTimer()" id = "stopBtn" style="display: none">ストップ</button>
+    <button class="btn-timer" onclick="resumeTimer()" id = "resumeBtn" style="display: none"><ruby>再開<rt>さいかい</rt></ruby></button>
+    <button class="btn-timer" onclick="saveTimer()" id = "saveBtn" style="display: none"><ruby>登録<rt>とうろく</rt></ruby></button>
+    <button class="btn-timer" onclick="resetTimer()" id = "resetBtn" style="display: none">リセット</button>
     <h3><ruby>上位記録<rt>じょういきろく</rt></ruby></h3>
     <ul id="topTimes"></ul>
-    <button onclick="showPage('recordPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
-    <button onclick="backTodetailPage()"><ruby>記録一覧<rt>きろくいちらん</rt></ruby>へ</button>
+    <button class="btn-nav" onclick="showPage('recordPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
+    <button class="btn-nav" onclick="backTodetailPage()"><ruby>記録一覧<rt>きろくいちらん</rt></ruby>へ</button>
   </div>
 
   <!-- 活動記録選択画面 -->
   <div id="historyPage" class="page">
     <h2><ruby>活動記録<rt>かつどうきろく</rt></ruby>の<ruby>選択<rt>せんたく</rt></ruby></h2>
     <ul id="allActivityList"></ul>
-    <button onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
+    <button class="btn-nav" onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
   </div>
 
   <!-- 活動毎の記録一覧 -->
   <div id="detailPage" class="page">
     <h2 id="detailTitle">活動名の記録</h2>
     <ul id="activityRecordList"></ul>
-    <button onclick="showPage('historyPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
-    <button onclick="backToTimer()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
+    <button class="btn-nav" onclick="showPage('historyPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
+    <button class="btn-nav" onclick="backToTimer()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
   </div>
 
   <div id="overlay"></div>

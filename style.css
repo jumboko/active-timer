@@ -1,60 +1,122 @@
-/* 全体の基本スタイル */
+/* ----------------------------
+  HTML背景設定
+----------------------------- */
+html{
+  background-color: #fdfaf6;     /* 背景色 */
+  padding: 0 1em 2em 1em;          /* 内側の余白：上 | 右 | 下 | 左 */
+/*  height: 1000px;   /* 高さ指定 */
+}
+
+
+/* ----------------------------
+  共通設定（背景・フォント・中央寄せ）
+----------------------------- */
 body {
-  font-family: "Hiragino Sans", sans-serif;
-  padding: 20px;
-  background: #f9f9f9;
+  font-family: "Hiragino Maru Gothic ProN", sans-serif; /* 丸みのあるフォントで親しみやすさ */
+  margin: 0;               /* 外側の余白 */
+  padding: 0 1em 2em 1em;          /* 内側の余白：スマホでも余白ができるようにパディング追加？ */
+  background: #fffab5;   /* やさしいベージュ系背景 */
+  color: #333;           /* 文字の色を黒 */
+  max-width: 900px;        /* 横幅を制限して中央寄せ、PCで見やすく */
+  margin: 0 auto;          /* body自体をhtmlの中央揃え */
+
+/* 開発用 */
+/*  border: 2px dashed #333;    /* 枠線を点線で表示（エリアの境界を視覚化） */
+/*  height: 1000px;         /* 高さ指定 */
 }
 
-/* タイトル */
-h1 {
-  font-size: 1.5em;
-  margin-bottom: 10px;
+/* ----------------------------
+  固定ヘッダー（タイトル・ログインUI）
+----------------------------- */
+#mainHeader {
+/*  display: flex;          /* 横並びにする（Flexbox） */
+/* flex-direction: column; /* フレックス化したアイテムを縦並びにする */
+/*  align-items: center;    /* 垂直方向の中央揃え */
+  background: #fcefdc;  /* 視認性ある背景色 */
+  padding: 1em;           /* 内側の余白 */
+  border-bottom: 2px solid #e0c9a6;/* ヘッダー下部に線追加 */
+  position: sticky;       /* スクロールしても画面上部に固定 　ログインボタンをヘッダーに留める効果も*/
+  top: 0;                 /* position: stickyに掛かり固定位置を最上部に指定 */
+  z-index: 1000;          /* positionに掛かり数字が大きいほど前面に表示 念のため？そんなことしなくても全面表示かも */
 }
 
-/* 入力欄、セレクト、ボタン共通スタイル */
-input, select, button {
-  margin: 5px 0;
-  padding: 5px;
-  font-size: 1em;
+#headerInner {
+  display: flex;                    /* 横並びにする（Flexbox） */
+  justify-content: space-between;   /* 左右に広げて配置する */
+  align-items: flex-start;          /* 垂直方向上部で揃える */
+/* flex-wrap: wrap;                  /* スマホ時に段落ちOK */
+  gap: 0.5em;                       /* 要素間にスペース */
+
+/* 開発用 */
+  border: 2px dashed #333;    /* 枠線を点線で表示（エリアの境界を視覚化） */ 
 }
 
-button {
-  cursor: pointer;
+/* タイトル部分（今後ロゴ画像に差し替え可） */
+#mainHeader #logoArea {
+  font-size: 2em;         /* 文字サイズ */
+  font-weight: bold;      /* 文字を太字 */
+  margin-bottom: 0.5em;   /* 外側下部の余白 */
+
+/* 開発用 */
+  border: 2px dashed #333;    /* 枠線を点線で表示（エリアの境界を視覚化） */
 }
 
-/* 記録関連のセクション */
+/* ログイン／ログアウトボタンを右上に配置 */
+#authStatus {
+  display: flex;          /* 横並びにする（Flexbox） */
+  flex-direction: column; /* フレックス化したアイテムを縦並びにする */
+/*  align-items: flex-end;    /* 子要素を垂直方向の下寄せ なんだけどflex-direction: columnで縦になっているから右寄せ*/
+/*  min-width: 180px; /* 最低幅を確保して折り返し防止???????????????????????????????いるかな？ */
+/*  position: absolute; /* ポジションを自由に指定 */
+/*  top: 0.5em;           /* 高さ指定 */
+/*  right: 2em;         /* 右側指定 */
+/*  max-width: 160px;       /* 追加：全体の最大幅（ボタンに合わせる） */
+  max-width: 150px; /* 折り返しの上限を画面幅に応じて変える ??????????なんかログインの後に折り返すように*/
 
 
-/* 活動記録・上位記録リスト共通スタイル */
- #activityList li, #topTimes li, #allActivityList li,
- #activityRecordList li{
-  display: flex;               /* 横並び（テキスト＋ボタン） 右は時に点がつく */
-  align-items: center;         /* 中央揃え */
-  justify-content: flex-start;  /* ← 左寄せ */
-  height: 2.6em;               /* 高さ */
-  padding: 0 4px;              /* ちょっと左右に余裕 */
-  margin-bottom: 6px;         /* 行間にスペース */
-  border-bottom: 1px solid #ddd; /* 区切り線（オプション） */
-  max-width: 380px;         /* ← 削除ボタン＋テキストの想定サイズに調整 文字数が多いと改行したりめちゃくちゃ */
-  box-sizing: border-box; /**/
-  /*background: yellow; /* 背景色 */
+/* 開発用 */
+  border: 2px dashed red;    /* 枠線を点線で表示（エリアの境界を視覚化） */
 }
 
-/* ポップアップ時のオーバーレイ */
-#overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 9999;
-  cursor: wait;
+/* ログイン／ログアウトボタンの設定 */
+#authStatus button {
+
 }
+
+.btn-auth { /* ????????????????ボタンの横幅をdivの最大スペースとしメールを折り返したい、レスポンシブルでボタンが小さくなればメール範囲も小さくなる */
+  margin-bottom: 0.1em;  /* 外側下部の余白          ??????????????????全方位でも？ボタンの大きさに合わせてdivが変わるようにしたい*/
+  align-self: flex-start;  /* 子要素を垂直方向の上寄せ  ??????????レスポンシブ時に変化 これないとボタン横伸び*/
+/*  margin: 0em;             /* 外側の余白を上書き */
+  padding: 0.3em 0.6em;    /* 内側の余白を上書き(元の値の半分) */
+/*  vertical-align: top;     /* 行内での垂直方向の位置調整 */
+
+
+}
+
+/* メールアドレスなどユーザー情報はタイトル下に */
+#userInfo {
+  font-size: 0.75em;    /* 文字サイズ */
+  color: #555;       /* 文字色グレー */
+/*  display: inline-block;         /* 幅を制限できるようにする ?????????????????未検証*/
+/*  max-width: 140px;              /* ログアウトボタンと同程度に制限 ?????????????????未検証*/
+/*display: block;/*  */
+/*  width: 100%;             /* 親の max-width に合わせて折り返す */
+  word-break: break-word;       /* 英語やメールで改行を許可 ?????????????????未検証*/
+/*  white-space: normal;          /* 折り返しを有効にする ?????????????????未検証*/
+/*  line-height: 1.2;        /*行の高さ*/
+   margin-left: 1em;    /*  */
+/*  line-height: 1.3;         /*行の高さ*/
+  text-align: left;       /* ログアウトボタンと揃える */
+
+/* 開発用 */
+  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
 
 /* ========== 画面切り替え用スタイル ========== */
-
+/* ----------------------------
+  ページ表示制御
+----------------------------- */
 /* デフォルトで全てのページを非表示に */
 .page {
   display: none;
@@ -65,39 +127,126 @@ button {
   display: block;
 }
 
-
-/* タイマー表示の小数部を小さくする */
-#timeDisplay small {
-  font-size: 0.6em;
-  vertical-align: top;
+/* ----------------------------
+  ボタンの共通デザイン（全体に優しい見た目）
+----------------------------- */
+button {
+  font-size: 1.2em;            /* 文字サイズ */
+  margin: 0.5em 0.2em;         /* 外側の余白 */
+  padding: 0.6em 1.2em;        /* 内側の余白 */
+  border: none;                /* 枠線非表示 */
+  border-radius: 12px;         /* 角を丸くする */
+  background: #f9c74f;       /* 背景色 */
+  color: #333;               /* 文字色 */
+  cursor: pointer;             /* マウスポインタ変化 */
+  /*transition: background 0.3s; /* マウスホバー時の動作反映  無くても動く？？？？？？？？？？？？？？*/
 }
 
-/* 活動記録選択画面の活動に適用  */
+/* ホバー時の色指定 */
+button:hover {
+  background: #f8961e; /* 背景色 */
+}
+
+/* ----------------------------
+  テキストボックスの共通デザイン（全体に優しい見た目）
+----------------------------- */
+input[type="text"], select {
+  font-size: 1.1em;           /* 文字サイズ */
+  margin: 0.5em 0.2em;        /* 外側の余白 */
+  padding: 0.5em;             /* 内側の余白 */
+  border: 1px solid #ccc;   /* 枠線の書式設定(太さ、タイプ、色)*/
+  border-radius: 10px;        /* 角を丸くする */
+  background-color: #fff;   /* 背景色 */
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
+}
+
+/* ----------------------------
+  タイマーの表示部分（枠で囲って見やすく）
+----------------------------- */
+#timeDisplay {
+  font-size: 2.5em;              /* 文字サイズ */
+  text-align: center;            /* 水平方向の中央揃え */
+  margin: 1em 0;                 /* 外側の余白 */
+  padding: 1em;                  /* 内側の余白 */
+  background: #fff3c4;         /* 文字サイズ */
+  border: 2px dashed #f4a261;  /* 枠線を点線で表示（エリアの境界を視覚化） */
+  border-radius: 12px;           /* 角を丸くする */
+  box-shadow: 2px 2px 6px rgba(0,0,0,0.1); /* ほんのり影で立体感 */
+}
+
+/* ----------------------------
+  活動一覧などのリスト表示
+----------------------------- */
+ul {
+  list-style: none; /* リストの先頭の点（●）を非表示 */
+  padding: 0;       /* 内側の余白0 */
+}
+
+/* 各項目のボックス化 */
+li {
+  margin: 0.5em 0;           /* 外側の余白 */
+  padding: 0.6em;            /* 内側の余白 */
+  background: #ffffff;     /* 背景色 */
+  border: 1px solid #ddd;  /* 枠線の書式設定(太さ、タイプ、色)*/
+  border-radius: 10px;       /* 角を丸くする */
+}
+
+/* 活動名にマウスを合わせたときの演出 */
 .activityName {
-  display: inline-block;
-  width: 270px;
-  white-space: nowrap; /* 1行で表示される */
-  overflow: hidden; /* 長すぎたら隠す */
-  text-overflow: ellipsis; /* 長すぎる内容は ... に */
-  cursor: pointer; /* マウスをポインタに */
+  cursor: pointer; /* カーソルが変わって押せるとわかる */
+  text-decoration: underline; /* 下線追加 */
+  color: #333;   /* 文字色 */
+}
+.activityName:hover {
+  color: #e76f51;  /* 文字色 */
+  text-shadow: 1px 1px 2px #ddd; /* ほんのり影で立体感 */
 }
 
-/* 活動毎の記録一覧のタイムに適用  */
-.recordText {
-  display: inline-block;
-  width: 270px;  /* 👈 調整してね！200〜280pxくらいが目安 */
-  /*white-space: nowrap;  1行で表示される */
-  /*overflow: hidden;  長すぎたら隠す */
-  /*text-overflow: ellipsis;  長すぎる内容は ... に */
+
+/* ----------------------------
+  削除ボタンの整列用：横並び＆縦中央揃え
+----------------------------- */
+#allActivityList li, 
+#activityRecordList li {
+  display: flex;                   /* 横並びにする（Flexbox）  */
+  justify-content: space-between;  /* 左右に広げて配置する */
+  align-items: center;             /* 垂直方向の中央揃え */
 }
 
-/* 削除ボタン  */
-.deleteBtn {
-  margin-left: 10px;
-  background: #ffcccc;
-  border: none;
-  padding: 4px 8px;
-  cursor: pointer;
-  height: 1.8em; /* 高さをliに揃えたいが？？？？？？？？？？？？？？？？？ */
+.btn-del {
+  margin: 0em;             /* 外側の余白を上書き */
+  padding: 0.3em 1.2em;    /* 内側の余白を上書き */
+  vertical-align: top;     /* 行内での垂直方向の位置調整 */
 }
 
+/* ----------------------------
+  バックアップ・インポートエリアの配置
+----------------------------- */
+#homePage {
+  margin-top: 2em;         /* 外側上部の余白 */
+  text-align: center; /* 子要素（h1, buttonなど）を中央揃え */
+}
+
+/* ----------------------------
+  バックアップ・インポートエリアの配置
+----------------------------- */
+#backupArea {
+  padding-top: 2em;         /* 内側上部の余白 */
+  display: flex;           /* 横並びにする（Flexbox）  */
+  flex-direction: column;  /* フレックス化したアイテムを縦並びにする */
+  gap: 0.5em;              /* ボタンの間にスペース */
+  align-items: center; /* display: flexで横に伸びるアイテムを自然なサイズに ？？？？？？？？？？？？？？本来は垂直方向の制御だがなぜか水平に効いてる*/
+}
+
+/* ----------------------------
+  レスポンシブ対応：スマホ時の調整
+----------------------------- */
+@media (max-width: 600px) {
+  body {
+    font-size: 90%;
+  }
+  button {
+    font-size: 1em;
+    padding: 0.5em 1em;
+  }
+}

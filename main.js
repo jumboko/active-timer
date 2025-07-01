@@ -54,6 +54,7 @@ async function loadActivities() {
     // 活動リストに追加し、クリックでタイマー画面へ遷移
     if (list) {
       const li = document.createElement('li');
+      li.classList.add('activityName');
       li.textContent = activity; // 表示名
       li.onclick = () => showTopTimes(activity); // 上位タイムを表示
       list.appendChild(li);
@@ -72,7 +73,7 @@ async function loadActivities() {
 
       // 削除ボタン表示
       const delBtn = document.createElement('button');
-      delBtn.classList.add('deleteBtn');
+      delBtn.classList.add('btn-del');
       delBtn.textContent = '削除'; // 表示名
       delBtn.onclick = async () => {  //押下時の挙動設定
         await deleteActivity(activity);
@@ -144,7 +145,7 @@ async function showActivityRecords(activity, highlightLast = false) {
 
     // 削除ボタン表示
     const delBtn = document.createElement('button');
-    delBtn.classList.add('deleteBtn');
+    delBtn.classList.add('btn-del');
     delBtn.textContent = '削除'; // 表示名
     delBtn.onclick = async () => {//押下時の挙動設定
       await deleteRecord(activity, record);
