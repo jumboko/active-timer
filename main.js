@@ -241,6 +241,8 @@ function startTimer() {
   document.getElementById('resumeBtn').style.display = 'none';
   document.getElementById('saveBtn').style.display = 'none';
   document.getElementById('resetBtn').style.display = 'none';
+
+  enableWakeLockCrossPlatform(); // ← スリープ防止ON
 }
 
 // タイマー停止（時間を加算し、リアルタイム更新停止）
@@ -258,6 +260,8 @@ function stopTimer() {
   document.getElementById('resumeBtn').style.display = 'inline-block';
   document.getElementById('saveBtn').style.display = 'inline-block';
   document.getElementById('resetBtn').style.display = 'inline-block';
+
+  disableWakeLockCrossPlatform(); // ← スリープ防止OFF
 }
 
 // タイマー再開（前回までの時間を継続）
@@ -371,8 +375,59 @@ async function deleteRecord(activity, target) {
 
 
 
+let wakeLock = null; // Wake Lock オブジェクトを保持（Android用）
 
+// iPhone/iPad/iPodか？
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+// Safariか？（Chrome for iOS は除外）
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
+// タイマー開始時などに呼び出す
+async function enableWakeLockCrossPlatform() {
+  // ✅ Wake Lock API が使えるブラウザ（Android Chrome など）
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      console.log('✅ Wake Lock（API）開始：スリープ防止');
+    } catch (e) {
+      console.warn('❌ Wake Lock取得失敗:', e);
+    }
+  // ✅ iOS Safari の場合：無音動画を再生してスリープを防止
+  } else if (isIOS && isSafari) {
+    const video = document.getElementById('wakelockVideo');
+    try {
+      await video.play();
+      console.log('✅ iOS Wake Lock（動画）開始：スリープ防止');
+    } catch (e) {
+      console.warn('❌ 動画再生失敗:', e);
+    }
+  // ❌ Wake Lock が使えない環境
+  } else {
+    console.log('🟡 Wake Lock 非対応の環境です');
+  }
+}
+
+// タイマー終了時などに呼び出す
+async function disableWakeLockCrossPlatform() {
+  // Androidなど Wake Lock API を解除
+  if (wakeLock) {
+    try {
+      await wakeLock.release();
+      console.log('✅ Wake Lock（API）解除：スリープ解除');
+    } catch (e) {
+      console.warn('❌ Wake Lock解除失敗:', e);
+    }
+    wakeLock = null;
+  }
+
+  // iOS Safari の場合：動画を停止してスリープ解除
+  if (isIOS && isSafari) {
+    const video = document.getElementById('wakelockVideo');
+    video.pause();
+    video.currentTime = 0; // 再生位置を巻き戻す
+    console.log('✅ iOS Wake Lock（動画）解除：スリープ解除');
+  }
+}
 
 
 

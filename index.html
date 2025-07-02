@@ -80,7 +80,13 @@
     <button class="btn-nav" onclick="backToTimer()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
   </div>
 
+  <!-- ポップアップ時の画面制御用 -->
   <div id="overlay"></div>
+
+  <!-- iOS Safari用のスリープ防止動画（非表示） -->
+  <video id="wakelockVideo" playsinline muted loop style="display: none;">
+    <source src="silent.mp4" type="video/mp4" />
+  </video>
 
   <!-- js 最後に書くことでhtmlの読み込みを優先 -->
   <script type="module" src="./firebase-init.js"></script>
