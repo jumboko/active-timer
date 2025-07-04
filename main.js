@@ -30,6 +30,7 @@ function showPage(id) {
   // もし今の画面が timerPage で、離れようとしているならリセット
   if (currentPageId === 'timerPage' && id !== 'timerPage') {
     resetTimer(); // 測定キャンセルとみなす
+    disableWakeLockCrossPlatform(); //  wake lock を解除
   }
 
   // すべてのページを非表示にし、指定ページのみ表示
@@ -242,6 +243,7 @@ function startTimer() {
   document.getElementById('saveBtn').style.display = 'none';
   document.getElementById('resetBtn').style.display = 'none';
 
+  disableWakeLockCrossPlatform(); // ← 念のため既存の Wake Lock を解除
   enableWakeLockCrossPlatform(); // ← スリープ防止ON
 }
 
@@ -277,8 +279,11 @@ function resumeTimer() {
   document.getElementById('resumeBtn').style.display = 'none';
   document.getElementById('saveBtn').style.display = 'none';
   document.getElementById('resetBtn').style.display = 'none';
+
+  enableWakeLockCrossPlatform(); // ← スリープ防止ON
 }
 
+// タイマー保存
 async function saveTimer() {
   // 記録を保存
   await addQueryData("records", {
@@ -398,6 +403,7 @@ async function enableWakeLockCrossPlatform() {
     try {
       await video.play();
       console.log('✅ iOS Wake Lock（動画）開始：スリープ防止');
+alert('Wake Lock 動画 再生中');
     } catch (e) {
       console.warn('❌ 動画再生失敗:', e);
     }
@@ -426,6 +432,7 @@ async function disableWakeLockCrossPlatform() {
     video.pause();
     video.currentTime = 0; // 再生位置を巻き戻す
     console.log('✅ iOS Wake Lock（動画）解除：スリープ解除');
+alert('Wake Lock 動画 停止');
   }
 }
 

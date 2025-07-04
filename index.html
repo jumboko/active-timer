@@ -42,8 +42,8 @@
     <input type="text" id="newActivity" placeholder="新しい活動名" />
     <label for="recordOrder">並び順：</label>
       <select id="recordOrder">
-        <option value="asc">昇順（短い→長い）</option>
-        <option value="desc" selected>降順（長い→短い）</option>
+        <option value="asc" selected>最短記録順</option>
+        <option value="desc">最長記録順</option>
       </select>
     <button class="btn-add" onclick="addActivity()"><ruby>追加<rt>ついか</rt></ruby></button>
     <ul id="activityList"></ul>

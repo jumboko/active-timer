@@ -61,7 +61,7 @@ function updateUIForUser(user) {
       userInfo.style.display = "inline-block";
       userInfo.textContent = `ログイン中: ${user.email || "不明なユーザー"}`;
     }
-    // 認証完了を知らせるカスタムイベントを dispatch（main.js がこれを待つ）
+    // 初期化のためカスタムイベントを dispatch（main.js）※userがnullの場合、匿名ログイン処理の後画面が初期化
     window.dispatchEvent(new Event("auth-ready"));
   } else {
     console.log("ログアウトまたは初回アクセスでuidがnull");
@@ -79,6 +79,7 @@ function updateUIForUser(user) {
         alert("ログインに失敗しました。時間をおいて再度アクセスしてください。");
       });
   }
+  showPage("homePage"); // ログインまたはログアウト後はホーム画面に戻る
 }
 
 // Googleログイン（ポップアップ）
@@ -94,7 +95,7 @@ export async function loginWithGoogle() {
   try {
     const result = await linkWithPopup(auth.currentUser, provider);
     console.log("✅ 匿名→Googleに昇格成功:", result.user);
-    // 手動でUI更新(データは匿名から引き継ぐだけで変更はないため画面初期化は不要)
+    // 手動でUI更新
     updateUIForUser(result.user);
   } catch (error) {
     // すでにGoogleアカウントで作られていた場合は signInWithPopup を使う
@@ -130,7 +131,7 @@ export async function loginWithGoogle() {
 
 		      // 🔽 匿名ユーザーでデータ保持の場合、マージの意思確認を行う
 		      if (wasAnonDataFlg) {
-            mergeCheck(result.user.uid, anonActivities, anonRecords);
+            mergeCheck(anonActivities, anonRecords, "google");
 		      }
 
         } catch (err) {
