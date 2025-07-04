@@ -25,6 +25,13 @@ console.log("画面初期化");
   updateTimerDisplay(0); // タイマー初期表示を0で統一（0h00m00s<small>00</small>）
 });
 
+// 画面状態がvisible(画面再アクティブ時)に変わり、startTimeがnullでない(タイマー動作中)場合
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && startTime) {
+    enableWakeLockCrossPlatform(); // ←  ← スリープ防止ON
+  }
+});
+
 // ========== ページ切り替え ==========
 function showPage(id) {
   // もし今の画面が timerPage で、離れようとしているならリセット
@@ -389,23 +396,13 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 // タイマー開始時などに呼び出す
 async function enableWakeLockCrossPlatform() {
-  // ✅ Wake Lock API が使えるブラウザ（Android Chrome など）
+  // ✅ Wake Lock API が使えるブラウザ
   if ('wakeLock' in navigator) {
     try {
       wakeLock = await navigator.wakeLock.request('screen');
       console.log('✅ Wake Lock（API）開始：スリープ防止');
     } catch (e) {
       console.warn('❌ Wake Lock取得失敗:', e);
-    }
-  // ✅ iOS Safari の場合：無音動画を再生してスリープを防止
-  } else if (isIOS && isSafari) {
-    const video = document.getElementById('wakelockVideo');
-    try {
-      await video.play();
-      console.log('✅ iOS Wake Lock（動画）開始：スリープ防止');
-alert('Wake Lock 動画 再生中');
-    } catch (e) {
-      console.warn('❌ 動画再生失敗:', e);
     }
   // ❌ Wake Lock が使えない環境
   } else {
@@ -415,7 +412,7 @@ alert('Wake Lock 動画 再生中');
 
 // タイマー終了時などに呼び出す
 async function disableWakeLockCrossPlatform() {
-  // Androidなど Wake Lock API を解除
+  // Wake Lock API を解除
   if (wakeLock) {
     try {
       await wakeLock.release();
@@ -424,15 +421,6 @@ async function disableWakeLockCrossPlatform() {
       console.warn('❌ Wake Lock解除失敗:', e);
     }
     wakeLock = null;
-  }
-
-  // iOS Safari の場合：動画を停止してスリープ解除
-  if (isIOS && isSafari) {
-    const video = document.getElementById('wakelockVideo');
-    video.pause();
-    video.currentTime = 0; // 再生位置を巻き戻す
-    console.log('✅ iOS Wake Lock（動画）解除：スリープ解除');
-alert('Wake Lock 動画 停止');
   }
 }
 
