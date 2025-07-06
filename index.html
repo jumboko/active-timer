@@ -9,6 +9,9 @@
   <!-- ヘッダー表示 -->
   <header id="mainHeader">
     <div id="headerInner">
+      <div id="homeButton">
+        <button class="btn-auth" onclick="showPage('homePage')">🏠ホーム</button>
+      </div>
       <div id="logoArea"><ruby>活動記録<rt>かつどうきろく</rt></ruby>タイマー</div>
       <div id="authStatus"><div class="authGroup">
         <button class="btn-auth" onclick="loginWithGoogle()">ログイン</button>
@@ -54,11 +57,17 @@
   <div id="timerPage" class="page">
     <h2 id="timerTitle">活動名のタイマー</h2>
     <p id="timeDisplay">0h00m00s<small>00</small></p>
-    <button class="btn-timer" onclick="startTimer()" id = "startBtn">スタート</button>
-    <button class="btn-timer" onclick="stopTimer()" id = "stopBtn" style="display: none">ストップ</button>
-    <button class="btn-timer" onclick="resumeTimer()" id = "resumeBtn" style="display: none"><ruby>再開<rt>さいかい</rt></ruby></button>
-    <button class="btn-timer" onclick="saveTimer()" id = "saveBtn" style="display: none"><ruby>登録<rt>とうろく</rt></ruby></button>
-    <button class="btn-timer" onclick="resetTimer()" id = "resetBtn" style="display: none">リセット</button>
+    <div id="timerControls">
+      <div class="control-left">
+        <button class="btn-timer main" onclick="startTimer()" id = "startBtn">スタート</button>
+        <button class="btn-timer main" onclick="stopTimer()" id = "stopBtn" style="display: none">ストップ</button>
+        <button class="btn-timer main" onclick="resumeTimer()" id = "resumeBtn" style="display: none"><ruby>再開<rt>さいかい</rt></ruby></button>
+        <button class="btn-timer save" onclick="saveTimer()" id = "saveBtn" style="display: none"><ruby>登録<rt>とうろく</rt></ruby></button>
+      </div>
+      <div class="control-right">
+        <button class="btn-timer reset" onclick="resetTimer()" id = "resetBtn" style="display: none">リセット</button>
+      </div>
+    </div>
     <h3><ruby>上位記録<rt>じょういきろく</rt></ruby></h3>
     <ul id="topTimes"></ul>
     <button class="btn-nav" onclick="showPage('recordPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
