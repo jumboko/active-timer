@@ -164,13 +164,49 @@ input[type="text"], select {
   box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
 }
 
-/* ----------------------------
-  タイマーの表示部分（枠で囲って見やすく）
------------------------------ */
+/* ================================
+   タイマー画面のレイアウト全体
+   PCでは横並び、スマホでは縦に並べる
+================================ */
+#timerLayout {
+  display: flex;                   /* 横並びにする（スマホでは後で縦並びに変更） */
+  gap: 1em;                        /* タイマーと上位記録の間にスペースを空ける */
+  align-items: flex-start;         /* 上揃えにする（高さが違っても揃う） */
+  justify-content: space-between;  /* 両端に均等配置(下位にflex: 1があるため本来は不要) */
+  margin-top: 1em;                 /* 上に少し余白 */
+  flex-wrap: wrap;                 /* 画面幅が狭いとき折り返し可 */
+
+/* 開発用 */
+/*  border: 2px dashed #333;         /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
+/* 左右エリア */
+.timerColumn,
+.rankColumn {
+  flex: 1;                       /* 余白に対し横幅を均等にとる */
+  display: flex;                 /* 横並びにする（Flexbox） */
+  flex-direction: column;        /* フレックス化したtitle,timeDisplay,ボタンを縦並びにする */
+  gap: 1em;                      /* アイテムの間隔を空ける */
+  min-width: 380px;              /* 最低幅を確保 */
+
+/* 開発用 */
+/*  border: 2px dashed red;       /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
+/*  タイトル（タイマー／上位記録）  */
+#timerTitle,
+.rankColumn h3 {
+  margin: 0;    /* 外側の余白 */
+
+/* 開発用 */
+/*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */ 
+}
+
+/* タイマーの表示部分（枠で囲って見やすく） */
 #timeDisplay {
   font-size: 2.5em;              /* 文字サイズ */
   text-align: center;            /* 水平方向の中央揃え */
-  margin: 1em 0;                 /* 外側の余白 */
+  margin: 0.2em 0;               /* 外側上下に余白 */
   padding: 1em;                  /* 内側の余白 */
   background: #fff3c4;         /* 文字サイズ */
   border: 2px dashed #f4a261;  /* 枠線を点線で表示（エリアの境界を視覚化） */
@@ -178,31 +214,38 @@ input[type="text"], select {
   box-shadow: 2px 2px 6px rgba(0,0,0,0.1); /* ほんのり影で立体感 */
 }
 
+/* 上位記録のリスト */
+#topTimes {
+  margin: 0em;                 /* 高さ統一のため外側の余白を削除 */
+}
+
+/* 画面移動のボタン全体のコンテナ */
+#timerBackControls {
+  margin: 0.7em 0;             /* 外側上下に余白(タイマーのボタンと揃うよう調整) */
+}
+
 /* タイマー操作ボタン全体のコンテナ */
 #timerControls {
   display: flex;                  /* 横並びに配置 */
-  justify-content: space-between;/* 左・中央・右のグループに分けて配置 */
-  align-items: center;           /* 垂直方向は中央揃え */
-  flex-wrap: wrap;               /* 画面幅が狭いとき折り返し可 */
-  margin: 1em 0;                 /* 上下に余白 */
+  justify-content: space-between; /* 左右に分けて配置（リセットボタンを右端に配置） */
+  align-items: center;            /* 垂直方向の中央揃え */
+  flex-wrap: wrap;                /* 画面幅が狭いとき折り返し可（ボタンが折り返す前に上位記録が縦になるため本来は起こりえない） */
+  margin: 1em 0;                  /* 上下に余白 */
+
+/* 開発用 */
+/*  border: 2px dashed red;       /* 枠線を点線で表示（エリアの境界を視覚化） */
 }
 
 /* 左側グループ（スタート／ストップ／再開） → 全く同じ位置で切り替え表示される */
 .control-left {
   display: flex;                 /* ボタンを横並び */
-  align-items: center;
+  align-items: center;           /* 垂直方向の中央揃え */
   gap: 0.5em;                    /* ボタン間に少し余白 */
-}
-
-/* 右側グループ（リセットボタン） → 誤タップを避けるため、右端に配置 */
-.control-right {
-  display: flex;                 /* ボタンを横並び */
-  justify-content: flex-end;    /* グループ内を右寄せ */
 }
 
 /* 共通：タイマーボタン全体 */
 .btn-timer {
-  height: 2.7em;               /* 高さだけ統一 */
+  height: 2.65em;               /* 高さだけ統一 */
 }
 
 /* スタート／ストップ／再開専用：横幅を固定 */
@@ -212,9 +255,8 @@ input[type="text"], select {
 
 /* 登録ボタン：少しだけ左のボタンから間を空ける */
 .btn-timer.save {
-  margin-left: 1em;          /* スタートとの間に空白を入れて誤タップ防止 */
+  margin-left: 0.2em;          /* スタートとの間に空白を入れて誤タップ防止 */
 }
-
 
 /* ----------------------------
   活動一覧などのリスト表示
