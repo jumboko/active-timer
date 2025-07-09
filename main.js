@@ -124,7 +124,8 @@ async function showTopTimes(activity) {
     const recordSpan = document.createElement('span');
     recordSpan.classList.add('recordText');
     const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
-    recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`; // 表示名
+    const shortDate = record.date.replace(/^20/, ''); // 2025-01-01 → 25-01-01
+    recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${shortDate}）`; // 表示名
     li.appendChild(recordSpan);
 
     list.appendChild(li);
@@ -169,7 +170,8 @@ async function showActivityRecords(activity, highlightLast = false) {
     const recordSpan = document.createElement('span');
     recordSpan.classList.add('recordText');
     const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
-    recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${record.date}）`; // 表示名
+    const shortDate = record.date.replace(/^20/, ''); // 2025-01-01 → 25-01-01
+    recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${shortDate}）`; // 表示名
     li.appendChild(recordSpan);
 
     // 削除ボタン表示

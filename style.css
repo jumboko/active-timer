@@ -2,6 +2,7 @@
   HTML背景設定
 ----------------------------- */
 html{
+  font-size: 16px; /* ルートの基準サイズを明示（1rem = 16px） */
   background-color: #fdfaf6;     /* 背景色 */
   padding: 0 1em 2em 1em;          /* 内側の余白：(上 | 右 | 下 | 左) */
 /*  height: 1000px;   /* 高さ指定 */
@@ -13,12 +14,11 @@ html{
 ----------------------------- */
 body {
   font-family: "Hiragino Maru Gothic ProN", sans-serif; /* 丸みのあるフォントで親しみやすさ */
-  margin: 0;               /* 外側の余白 */
-  padding: 0 1em 2em 1em;          /* 内側の余白：スマホでも余白ができるようにパディング追加？ */
+  margin: 0 auto;          /* 外側の余白 body自体をhtmlの中央揃え */
+  padding: 0 1em 2em 1em;  /* 内側の余白 */
   background: #fffab5;   /* やさしいベージュ系背景 */
   color: #333;           /* 文字の色を黒 */
   max-width: 900px;        /* 横幅を制限して中央寄せ、PCで見やすく */
-  margin: 0 auto;          /* body自体をhtmlの中央揃え */
 
 /* 開発用 */
 /*  border: 2px dashed #333;    /* 枠線を点線で表示（エリアの境界を視覚化） */
@@ -162,6 +162,10 @@ input[type="text"], select {
   border-radius: 10px;        /* 角を丸くする */
   background-color: #fff;   /* 背景色 */
   box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
+}
+
+#recordOrderLabel {
+  margin-left: 0.5em; /* ラベルと他要素の間に余白を追加 */
 }
 
 /* ================================
@@ -356,11 +360,41 @@ li {
   レスポンシブ対応：スマホ時の調整
 ----------------------------- */
 @media (max-width: 600px) {
+  html{
+    padding: 0;          /* 内側の余白：(上 | 右 | 下 | 左) */
+  }
+
   body {
     font-size: 90%;
+    padding: 0em 0.2em 1.5em 0.2em;  /* 余白をぐっと減らす (上 | 右 | 下 | 左)*/
   }
+
+  /* padding が width に含まれるようになるため、要素が画面幅をはみ出しにくく */
+  * {
+    box-sizing: border-box;
+  }
+  
+  #mainHeader #logoArea {
+    font-size: 1.3em; /* タイトル文字を縮小して横幅を確保 */
+  }
+
   button {
     font-size: 1em;
     padding: 0.5em 1em;
+  }
+
+  /* 活動名登録テキストボックス */
+  #newActivity{
+    width: 98%;  /* 横幅いっぱい※margin分ずれるため100にしない */
+  }
+  /* 昇順降順プルダウン */
+  #recordOrder {
+    height: 2.6em; /* テキストボックスと高さ揃える ??????????????????????????聞くか分からん、safariでは形式が異なる */
+  }
+
+  /* タイマー画面を縦表示に */
+  .timerColumn,
+  .rankColumn {
+    min-width: 100%; /* スマホ画面の横幅に自動調整 */
   }
 }
