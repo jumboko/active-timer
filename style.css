@@ -366,7 +366,7 @@ li {
 
   body {
     font-size: 90%;
-    padding: 0em 0.2em 1.5em 0.2em;  /* 余白をぐっと減らす (上 | 右 | 下 | 左)*/
+    padding: 0em 0.4em 1.5em 0.4em;  /* 余白をぐっと減らす (上 | 右 | 下 | 左)*/
   }
 
   /* padding が width に含まれるようになるため、要素が画面幅をはみ出しにくく */

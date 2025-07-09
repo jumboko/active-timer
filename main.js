@@ -160,6 +160,10 @@ async function showActivityRecords(activity, highlightLast = false) {
   allRecords.forEach((record, index) => {
     const li = document.createElement('li');
 
+    // 削除や照合用に日付・タイムを埋め込む
+    li.dataset.date = record.date;
+    li.dataset.time = record.time;
+
     // 順位表示
     const rankSpan = document.createElement('span');
     rankSpan.classList.add('rank');
@@ -369,8 +373,8 @@ async function deleteRecord(activity, target) {
     const allLis = Array.from(list.children);
 
     // 行を削除
-    const liToRemove = allLis.find(li =>
-      li.innerText.includes(target.date) && li.innerText.includes(formatTime(target.time * 1000).text)
+    const liToRemove = Array.from(list.children).find(li =>
+      li.dataset.date === target.date && parseFloat(li.dataset.time) === target.time
     );
 
     // htmlの表示のリストから削除した記録を除く
