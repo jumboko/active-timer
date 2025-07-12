@@ -14,13 +14,14 @@
         <button class="btn-auth" onclick="showPage('homePage')">🏠ホーム</button>
       </div>
       <div id="logoArea"><ruby>活動記録<rt>かつどうきろく</rt></ruby>タイマー</div>
-      <div id="authStatus"><div class="authGroup">
+      <div id="authStatus">
         <button class="btn-auth" onclick="loginWithGoogle()">ログイン</button>
         <button class="btn-auth" onclick="logout()" style="display: none;">ログアウト</button>
         <div id="userInfo" style="display: none;">
           ログイン中：<span class="emailText">user@example.com</span> <!-- ユーザ情報 -->
+          <span class="tooltip">user@example.com</span> <!-- ツールチップ用 -->
         </div>
-      </div></div>
+      </div>
     </div>
   </header>
 

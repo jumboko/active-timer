@@ -59,7 +59,14 @@ function updateUIForUser(user) {
       loginBtn.style.display = "none";
       logoutBtn.style.display = "inline-block";
       userInfo.style.display = "inline-block";
-      userInfo.textContent = `ログイン中: ${user.email || "不明なユーザー"}`;
+
+      // ユーザ情報表示
+      const userEmail = user.email || "不明なユーザー";
+      const emailSpan = document.querySelector('.emailText');
+      const tooltipSpan = document.querySelector('.tooltip');
+
+      emailSpan.textContent = userEmail;
+      tooltipSpan.textContent = userEmail;
     }
     // 初期化のためカスタムイベントを dispatch（main.js）※userがnullの場合、匿名ログイン処理の後画面が初期化
     window.dispatchEvent(new Event("auth-ready"));

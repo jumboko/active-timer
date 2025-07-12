@@ -29,13 +29,9 @@ body {
   固定ヘッダー（タイトル・ログインUI）
 ----------------------------- */
 #mainHeader {
-/*  display: flex;          /* 横並びにする（Flexbox） */
-/* flex-direction: column; /* フレックス化したアイテムを縦並びにする */
-/*  align-items: center;    /* 垂直方向の中央揃え */
   background: #fcefdc;  /* 視認性ある背景色 */
   padding: 1em;           /* 内側の余白 */
   border-bottom: 2px solid #e0c9a6;/* ヘッダー下部に線追加 */
-
   position: sticky;       /* スクロールしても画面上部に固定*/
   top: 0;                 /* position: stickyに掛かり固定位置を最上部に指定 */
   z-index: 1000;          /* positionに掛かり数字が大きいほど前面に表示 念のため？そんなことしなくても全面表示かも */
@@ -45,7 +41,6 @@ body {
   display: flex;                    /* 横並びにする（Flexbox） */
   justify-content: space-between;   /* 左右に広げて配置する */
   align-items: flex-start;          /* 垂直方向上部で揃える */
-/* flex-wrap: wrap;                  /* スマホ時に段落ちOK */
   gap: 0.5em;                       /* 要素間にスペース */
 
 /* 開発用 */
@@ -73,49 +68,67 @@ body {
 #authStatus {
   display: flex;          /* 横並びにする（Flexbox） */
   flex-direction: column; /* フレックス化したアイテムを縦並びにする */
-/*  align-items: flex-end;    /* 子要素を垂直方向の下寄せ なんだけどflex-direction: columnで縦になっているから右寄せ*/
-/*  min-width: 180px; /* 最低幅を確保して折り返し防止???????????????????????????????いるかな？ */
-/*  position: absolute; /* ポジションを自由に指定 */
-/*  top: 0.5em;           /* 高さ指定 */
-/*  right: 2em;         /* 右側指定 */
-/*  max-width: 160px;       /* 追加：全体の最大幅（ボタンに合わせる） */
-  max-width: 150px; /* 折り返しの上限を画面幅に応じて変える ??????????なんかログインの後に折り返すように*/
-
+  max-width: 130px;       /* 折り返しの上限を画面幅に応じて変える */
 
 /* 開発用 */
 /*  border: 2px dashed red;    /* 枠線を点線で表示（エリアの境界を視覚化） */
 }
 
 /* ログイン・ログアウトボタンの設定 */
-.btn-auth { /* ????????????????ボタンの横幅をdivの最大スペースとしメールを折り返したい、レスポンシブルでボタンが小さくなればメール範囲も小さくなる */
-  margin-bottom: 0.1em;  /* 外側下部の余白          ??????????????????全方位でも？ボタンの大きさに合わせてdivが変わるようにしたい*/
-  align-self: flex-start;  /* 子要素を垂直方向の上寄せ  ??????????レスポンシブ時に変化 これないとボタン横伸び*/
-/*  margin: 0em;             /* 外側の余白を上書き */
+.btn-auth {
+  margin-bottom: 0.1em;    /* 外側下部の余白          ??????????????????全方位でも？ボタンの大きさに合わせてdivが変わるようにしたい*/
   padding: 0.3em 0.6em;    /* 内側の余白を上書き(元の値の半分) */
-/*  vertical-align: top;     /* 行内での垂直方向の位置調整 */
-
-
+  align-self: flex-start;  /* 子要素を垂直方向の上寄せ  これがないとボタン横伸び*/
 }
 
 /* メールアドレスなどユーザー情報はタイトル下に */
 #userInfo {
-  font-size: 0.75em;    /* 文字サイズ */
+  font-size: 0.75em;   /* 文字サイズ */
   color: #555;       /* 文字色グレー */
-/*  display: inline-block;         /* 幅を制限できるようにする ?????????????????未検証*/
-/*  max-width: 140px;              /* ログアウトボタンと同程度に制限 ?????????????????未検証*/
-/*display: block;/*  */
-/*  width: 100%;             /* 親の max-width に合わせて折り返す */
-  word-break: break-word;       /* 英語やメールで改行を許可 ?????????????????未検証*/
-/*  white-space: normal;          /* 折り返しを有効にする ?????????????????未検証*/
-/*  line-height: 1.2;        /*行の高さ*/
-   margin-left: 1em;    /*  */
-/*  line-height: 1.3;         /*行の高さ*/
-  text-align: left;       /* ログアウトボタンと揃える */
+  margin-left: 0.6em;  /* 外側左部の余白 */
+  max-width: 100%;     /* 親の最大幅に依存 */
+  position: relative;     /* tooltipの基準位置を指定 */
 
 /* 開発用 */
 /*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */
 }
 
+.emailText {
+  display: inline-block;     /* inline-block要素扱い */
+  overflow: hidden;          /* はみ出た分は非表示 */
+  text-overflow: ellipsis;   /* はみ出た場合は末尾を…に */
+  white-space: nowrap;       /* 折り返さない */
+  max-width: 100%;           /* 親の最大幅に依存 */
+
+/* 開発用 */
+/*  border: 2px dashed red;    /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
+/* カスタムツールチップ */
+.tooltip {
+  position: absolute;     /* 基準値から自由に配置(userInfoに基準設定) */
+  top: 100%;              /* 要素の下側に */
+  right: 0;               /* 右端を合わせ画面内に収まるように */
+  background: #333;     /* 背景色 */
+  color: #fff;          /* 文字色 */
+  padding: 0.4em 0.6em;   /* 内側の余白 */
+  border-radius: 5px;     /* 角を丸くする */
+  font-size: 1em;         /* 文字サイズ */
+  white-space: normal;    /* 折り返さない */
+  box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.3);   /* 影を付ける */
+
+  /* ▼ 最初は見えない状態 */
+  opacity: 0;                    /* 不透明度 ※ホバーまで非表示 */
+  pointer-events: none;          /* 不透明の時はホバーしても反応しないように */
+  transition: opacity 0.3s ease; /* マウスホバー時の動作反映速度指定 ease=適度な加減速 */
+  z-index: 9999;                 /* 前面に表示 */
+}
+
+/* userInfoホバー時にtooltip表示 */
+#userInfo:hover .tooltip {
+  opacity: 0.9;             /* 不透明度 */
+  pointer-events: auto;     /* 表示後はマウス操作を許可 */
+}
 
 /* ========== 画面切り替え用スタイル ========== */
 /* ----------------------------
@@ -143,7 +156,7 @@ button {
   background: #f9c74f;       /* 背景色 */
   color: #333;               /* 文字色 */
   cursor: pointer;             /* マウスポインタ変化 */
-  /*transition: background 0.3s; /* マウスホバー時の動作反映  無くても動く？？？？？？？？？？？？？？*/
+  transition: background 0.3s; /* マウスホバー時の動作反映速度指定 */
 }
 
 /* ホバー時の色指定 */
@@ -373,9 +386,15 @@ li {
   * {
     box-sizing: border-box;
   }
-  
+
+  /* タイトル文字を縮小して横幅を確保 */
   #mainHeader #logoArea {
-    font-size: 1.3em; /* タイトル文字を縮小して横幅を確保 */
+    font-size: 1.3em; 
+  }
+
+  /* ボタンの表示幅に合わせ横幅変更 */
+  #authStatus {
+    max-width: 100px;
   }
 
   button {
