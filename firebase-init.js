@@ -44,6 +44,8 @@ function updateUIForUser(user) {
   const loginBtn = document.querySelector("#authStatus button[onclick='loginWithGoogle()']");
   const logoutBtn = document.querySelector("#authStatus button[onclick='logout()']");
   const userInfo = document.getElementById("userInfo");
+  const emailSpan = document.querySelector('.emailText');
+  const tooltipSpan = document.querySelector('.tooltip');
 
   if (user) {
     console.log("UID取得:", user.uid);
@@ -53,7 +55,9 @@ function updateUIForUser(user) {
       loginBtn.style.display = "inline-block";
       logoutBtn.style.display = "none";
       userInfo.style.display = "none";
-      userInfo.textContent = "";
+      emailSpan.textContent = "";
+      tooltipSpan.textContent = "";
+
     } else {
       // Googleログインなどの場合はログイン状態として表示
       loginBtn.style.display = "none";
@@ -62,9 +66,6 @@ function updateUIForUser(user) {
 
       // ユーザ情報表示
       const userEmail = user.email || "不明なユーザー";
-      const emailSpan = document.querySelector('.emailText');
-      const tooltipSpan = document.querySelector('.tooltip');
-
       emailSpan.textContent = userEmail;
       tooltipSpan.textContent = userEmail;
     }
@@ -75,7 +76,9 @@ function updateUIForUser(user) {
     loginBtn.style.display = "inline-block";
     logoutBtn.style.display = "none";
     userInfo.style.display = "none";
-    userInfo.textContent = "";
+    emailSpan.textContent = "";
+    tooltipSpan.textContent = "";
+
     // 匿名でログイン処理を実行
     signInAnonymously(auth)
       .then(() => {
