@@ -58,7 +58,14 @@ body {
 #mainHeader #logoArea {
   font-size: 2em;         /* 文字サイズ */
   font-weight: bold;      /* 文字を太字 */
-  margin-bottom: 0.5em;   /* 外側下部の余白 */
+  margin-top: 0.1em;      /* 外側下部の余白 */
+  margin-bottom: 0.4em;   /* 外側下部の余白 */
+
+  /* タイトル折り返し対応 */
+  display: inline-flex;   
+  flex-wrap: wrap;        /* 折り返しを許可 */
+  justify-content: center;/* 中央に配置 */
+  align-items: flex-end;  /* 垂直方向下部で揃える */
 
 /* 開発用 */
 /*  border: 2px dashed #333;    /* 枠線を点線で表示（エリアの境界を視覚化） */
@@ -79,6 +86,7 @@ body {
   margin-bottom: 0.1em;    /* 外側下部の余白          ??????????????????全方位でも？ボタンの大きさに合わせてdivが変わるようにしたい*/
   padding: 0.3em 0.6em;    /* 内側の余白を上書き(元の値の半分) */
   align-self: flex-start;  /* 子要素を垂直方向の上寄せ  これがないとボタン横伸び*/
+  white-space: nowrap;     /* 折り返さない */
 }
 
 /* メールアドレスなどユーザー情報はタイトル下に */
