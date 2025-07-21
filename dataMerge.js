@@ -33,8 +33,9 @@ export async function mergeUserData(inputActivities, inputRecords, currentActNam
     
       // 新たな活動を追加（あとでまとめて Promise.all）
       actAdds.push(addQueryData("activities", {
-        actName: setActName,
-        userId: currentUid
+        ...inputAct,         // 取得情報をそのまま展開
+        actName: setActName, // 上書き（重複回避で名称変更の可能性があるため）
+        userId: currentUid,  // 上書き
       }));
 
       // 名前が重複しないようにリストに追加
@@ -44,25 +45,25 @@ export async function mergeUserData(inputActivities, inputRecords, currentActNam
     // 取得中のinputアクティビティに対応する記録一覧を取得
     const inputActRecs = inputRecords.filter(r => r.actName=== inputAct.actName);
     // 記録一覧を1件ずつ処理(活動名重複を分けない場合もそのまま登録)
-    for (const rec of inputActRecs) {
+    for (const inputRec of inputActRecs) {
       // 既存レコード一覧に完全重複のinput記録が1件でも存在するかを確認
       const dupFlg = currentRecords.some(cr =>
         cr.actName === setActName &&
-        cr.date === rec.date &&
-        cr.time === rec.time
+        cr.date === inputRec.date &&
+        cr.time === inputRec.time
       );
 
       // 重複がない場合
       if (!dupFlg) {
         // 記録を追加（あとでまとめて Promise.all）
         recAdds.push(addQueryData("records", {
-          actName: setActName,
-          time: rec.time,
-          date: rec.date,
-          userId: currentUid
+          ...inputRec,         // 取得情報をそのまま展開
+          actName: setActName, // 上書き（重複回避で名称変更の可能性があるため）
+          userId: currentUid   // 上書き
         }));
+
       } else {
-        console.log(`⏭ 重複スキップ: ${setActName} (${rec.date}, ${rec.time}s)`); // 処理の遅延会費で削除検討？？？？？？？？？？？？
+        console.log(`⏭ 重複スキップ: ${setActName} (${inputRec.date}, ${inputRec.time}s)`); // 処理の遅延回避で削除検討？？？？？？？？？？？？
       }
     }
   }

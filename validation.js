@@ -39,7 +39,7 @@ export function validateFields(collectionName, rawData = {}) {
   // 項目名を順番に取得　※スキーマにない項目は扱わない
   for (const key of schema) {
     // 対象項目が存在し中身がある場合　　　時間とか日付とかはフォーマットも確認いりそう？？？？
-    if (key in rawData && rawData[key] !== "") {
+    if (rawData[key] != null && rawData[key] !== "") {
       cleanData[key] = rawData[key]; // そのまま使用
     
     // 不足があった場合
