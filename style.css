@@ -2,10 +2,13 @@
   HTML背景設定
 ----------------------------- */
 html{
-  font-size: 16px; /* ルートの基準サイズを明示（1rem = 16px） */
-  background-color: #fdfaf6;     /* 背景色 */
-  padding: 0 1em 2em 1em;          /* 内側の余白：(上 | 右 | 下 | 左) */
-/*  height: 1000px;   /* 高さ指定 */
+  font-size: 16px;                /* ルートの基準サイズを明示（1rem = 16px） */
+  background-color: #fdfaf6;    /* 背景色 */
+  padding: 0 1em 2em 1em;         /* 内側の余白：(上 | 右 | 下 | 左) */
+
+/* 開発用 */
+/*  border: 2px dashed #333;    /* 枠線を点線で表示（エリアの境界を視覚化） */
+/*  height: 1000px;             /* 高さ指定 */
 }
 
 
@@ -22,7 +25,20 @@ body {
 
 /* 開発用 */
 /*  border: 2px dashed #333;    /* 枠線を点線で表示（エリアの境界を視覚化） */
-/*  height: 1000px;         /* 高さ指定 */
+/*  height: 1000px;             /* 高さ指定 */
+}
+
+/* ----------------------------
+  ページ表示制御
+----------------------------- */
+/* デフォルトで全てのページを非表示に */
+.page {
+  display: none;
+}
+
+/* JavaScriptでactiveクラスが付いたページだけ表示 */
+.page.active {
+  display: block;
 }
 
 /* ----------------------------
@@ -45,13 +61,6 @@ body {
 
 /* 開発用 */
 /*  border: 2px dashed #333;    /* 枠線を点線で表示（エリアの境界を視覚化） */ 
-}
-
-/* ホームボタンエリア */
-#mainHeader #homeButton {
-
-/* 開発用 */
-/*  border: 2px dashed #333;    /* 枠線を点線で表示（エリアの境界を視覚化） */
 }
 
 /* タイトル部分（今後ロゴ画像に差し替え可） */
@@ -83,7 +92,7 @@ body {
 
 /* ログイン・ログアウトボタンの設定 */
 .btn-auth {
-  margin-bottom: 0.1em;    /* 外側下部の余白          ??????????????????全方位でも？ボタンの大きさに合わせてdivが変わるようにしたい*/
+  margin-bottom: 0.1em;    /* 外側下部の余白 */
   padding: 0.3em 0.6em;    /* 内側の余白を上書き(元の値の半分) */
   align-self: flex-start;  /* 子要素を垂直方向の上寄せ  これがないとボタン横伸び*/
   white-space: nowrap;     /* 折り返さない */
@@ -95,12 +104,13 @@ body {
   color: #555;       /* 文字色グレー */
   margin-left: 0.6em;  /* 外側左部の余白 */
   max-width: 100%;     /* 親の最大幅に依存 */
-  position: relative;     /* tooltipの基準位置を指定 */
+  position: relative;  /* tooltipの基準位置を指定 */
 
 /* 開発用 */
 /*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */
 }
 
+/* メールアドレス設定 */
 .emailText {
   display: inline-block;     /* inline-block要素扱い */
   overflow: hidden;          /* はみ出た分は非表示 */
@@ -138,20 +148,6 @@ body {
   pointer-events: auto;     /* 表示後はマウス操作を許可 */
 }
 
-/* ========== 画面切り替え用スタイル ========== */
-/* ----------------------------
-  ページ表示制御
------------------------------ */
-/* デフォルトで全てのページを非表示に */
-.page {
-  display: none;
-}
-
-/* JavaScriptでactiveクラスが付いたページだけ表示 */
-.page.active {
-  display: block;
-}
-
 /* ----------------------------
   ボタンの共通デザイン（全体に優しい見た目）
 ----------------------------- */
@@ -185,8 +181,9 @@ input[type="text"], select {
   box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
 }
 
+/* 並び順のプルダウンを囲むラベル設定 */
 #recordOrderLabel {
-  margin-left: 0.5em; /* ラベルと他要素の間に余白を追加 */
+  margin-left: 0.5em; /* 並び順の前に余白を追加 */
 }
 
 /* ================================
@@ -239,16 +236,6 @@ input[type="text"], select {
   box-shadow: 2px 2px 6px rgba(0,0,0,0.1); /* ほんのり影で立体感 */
 }
 
-/* 上位記録のリスト */
-#topTimes {
-  margin: 0em;                 /* 高さ統一のため外側の余白を削除 */
-}
-
-/* 画面移動のボタン全体のコンテナ */
-#timerBackControls {
-  margin: 0.7em 0;             /* 外側上下に余白(タイマーのボタンと揃うよう調整) */
-}
-
 /* タイマー操作ボタン全体のコンテナ */
 #timerControls {
   display: flex;                  /* 横並びに配置 */
@@ -283,8 +270,18 @@ input[type="text"], select {
   margin-left: 0.2em;          /* スタートとの間に空白を入れて誤タップ防止 */
 }
 
+/* 上位記録のリスト */
+#topTimes {
+  margin: 0em;                 /* 高さ統一のため外側の余白を削除 */
+}
+
+/* 画面移動のボタン全体のコンテナ */
+#timerBackControls {
+  margin: 0.7em 0;             /* 外側上下に余白(タイマーのボタンと揃うよう調整) */
+}
+
 /* ----------------------------
-  活動一覧などのリスト表示
+  活動一覧等のリスト表示
 ----------------------------- */
 ul {
   list-style: none; /* リストの先頭の点（●）を非表示 */
@@ -346,36 +343,35 @@ li {
   ホームページの設定
 ----------------------------- */
 #homePage {
-  margin-top: 2em;         /* 外側上部の余白 */
-  text-align: center; /* 子要素（h1, buttonなど）を中央揃え */
+  margin-top: 2em;      /* 外側上部の余白 */
+  text-align: center;   /* 子要素（h1, buttonなど）を中央揃え */
 }
 
 /* ----------------------------
   バックアップ・インポートエリアの配置
 ----------------------------- */
 #backupArea {
-  padding-top: 2em;         /* 内側上部の余白 */
+  padding-top: 2em;        /* 内側上部の余白 */
   display: flex;           /* 横並びにする（Flexbox）  */
   flex-direction: column;  /* フレックス化したアイテムを縦並びにする */
   gap: 0.5em;              /* ボタンの間にスペース */
-  align-items: center; /* display: flexで横に伸びるアイテムを自然なサイズに ？？？？？？？？？？？？？？本来は垂直方向の制御だがなぜか水平に効いてる*/
+  align-items: center;     /* display: flexで横に伸びるアイテムを自然なサイズに */
 }
 
 /* ----------------------------
   ポップアップ時のオーバーレイ
 ----------------------------- */
 #overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 9999;
-  cursor: wait;
+  display: none;       /* 非表示 */
+  position: fixed;     /* 位置を固定 */
+  top: 0;              /* 全画面配置 */
+  left: 0;             /* 全画面配置 */
+  right: 0;            /* 全画面配置 */
+  bottom: 0;           /* 全画面配置 */
+  background: rgba(0, 0, 0, 0.3);    /* 背景色 */
+  z-index: 99999;      /* 前面に表示 */
+  cursor: wait;        /* カーソルをwaitに変更 */
 }
-
 
 /* ----------------------------
   レスポンシブ対応：スマホ時の調整

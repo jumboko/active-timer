@@ -1,7 +1,6 @@
 // ================================
 // validationチェック用
 // ================================
-
 // validation.js
 
 /**
@@ -33,7 +32,6 @@ export function validateFields(collectionName, rawData = {}) {
   return null;
   }
 
-  const userId = auth.currentUser.uid; // ログイン中のユーザーUIDを取得（補完用）
   const cleanData = {}; // 補正後のデータ格納用
 
   // 項目名を順番に取得　※スキーマにない項目は扱わない
@@ -41,7 +39,7 @@ export function validateFields(collectionName, rawData = {}) {
     // 対象項目が存在し中身がある場合　　　時間とか日付とかはフォーマットも確認いりそう？？？？
     if (rawData[key] != null && rawData[key] !== "") {
       cleanData[key] = rawData[key]; // そのまま使用
-    
+
     // 不足があった場合
     }else {
       // activitiesのrecOrderに問題があった場合
@@ -50,7 +48,7 @@ export function validateFields(collectionName, rawData = {}) {
 
       // userIdに問題があった場合
       } else if (key === "userId") {
-        cleanData[key] = userId; // ユーザーIDを補完
+        cleanData[key] = auth.currentUser.uid; // ユーザーIDを補完
 
       } else {
         // 補完不可能な項目が不足 → 無効データとして null を返す
@@ -59,6 +57,5 @@ export function validateFields(collectionName, rawData = {}) {
       }
     }
   }
-
   return cleanData; // スキーマ準拠・補完済みの安全なデータ
 }

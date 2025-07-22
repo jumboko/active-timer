@@ -1,7 +1,6 @@
 // ================================
 // firebase初期ロード、DB、認証
 // ================================
-
 // firebase-init.js
 
 // Firebase SDKの読み込み
@@ -33,13 +32,17 @@ const app = initializeApp(firebaseConfig);
 window.db = getFirestore(app);
 window.auth = getAuth(app);
 
+// -----------------------------
 // 匿名ログイン後の認証状態を監視して、main.js に通知する（初回画面表示含む）
+// -----------------------------
 onAuthStateChanged(auth, (user) => {
 console.log("onAuthStateChanged 認証変更キャッチ", user);
   updateUIForUser(user);
 });
 
+// -----------------------------
 // 認証状態に応じて画面表示の更新
+// -----------------------------
 function updateUIForUser(user) {
   const loginBtn = document.querySelector("#authStatus button[onclick='loginWithGoogle()']");
   const logoutBtn = document.querySelector("#authStatus button[onclick='logout()']");
@@ -94,21 +97,21 @@ function updateUIForUser(user) {
 
 // Googleログイン（ポップアップ）
 export async function loginWithGoogle() {
-  const provider = new GoogleAuthProvider();
-
   if (!auth.currentUser) {
     alert("ユーザー情報の取得に失敗しました。もう一度お試しください。");
     return;
   }
+  // Googleプロバイダオブジェクトのインスタンス作成
+  const provider = new GoogleAuthProvider();
 
   document.getElementById("overlay").style.display = "block"; // ← ポップアップ時に画面オーバーレイ
   try {
-    const result = await linkWithPopup(auth.currentUser, provider);
+    const result = await linkWithPopup(auth.currentUser, provider); // 現UIDをgoogleアカウントUIDに昇格させる
     console.log("✅ 匿名→Googleに昇格成功:", result.user);
     // 手動でUI更新
     updateUIForUser(result.user);
   } catch (error) {
-    // すでにGoogleアカウントで作られていた場合は signInWithPopup を使う
+    // すでにGoogleアカウントで作られていた場合は signInWithPopup でUIDを切り替える
     if (error.code === 'auth/credential-already-in-use') {
       console.warn("⚠️ 既にそのGoogleアカウントは使われています。通常のログインに切り替えます。");
 
@@ -132,14 +135,14 @@ export async function loginWithGoogle() {
 		        console.log("🕒 匿名ユーザーデータを削除予約に登録しました");
           }
 
-          const result = await signInWithCredential(auth, credential);
+          const result = await signInWithCredential(auth, credential); //googleアカウントUIDに切り替え
           console.log("✅ Google再ログイン成功:", result.user);// 再ログイン成功後、uid変更でonAuthStateChanged再発火、その後結果が返るためログ順が変わる
 
           // マージで失敗した場合、ログイン済みだったらどうする？ログアウトしても匿名データは戻らないよね。？？？？？？？？？？？？？？？？
           // エクスポート機能でリスクヘッジ
 
 
-		      // 🔽 匿名ユーザーでデータ保持の場合、マージの意思確認を行う
+		      // 🔽 匿名ユーザーでデータ保持の場合、マージの意思確認を行いマージ処理を実施
 		      if (wasAnonDataFlg) {
             mergeCheck(anonActivities, anonRecords, "google");
 		      }
@@ -161,11 +164,11 @@ export async function loginWithGoogle() {
   }
 }
 
-/**
- * インポートまたは匿名→Google昇格時のデータマージ確認処理
- * - 活動名の重複確認・分離対応
- * - 完了後は auth-ready イベントを発火して UI を再初期化
- * 
+// -----------------------------
+// インポートまたは匿名→Google昇格時のデータマージ確認処理
+// - 活動名の重複確認・分離対応
+// - 完了後は auth-ready イベントを発火して UI を再初期化
+/** ----------------------------
  * @param {Array} inputActivities - マージ対象のアクティビティ一覧
  * @param {Array} inputRecords - マージ対象の記録一覧
  * @param {string} mode - "google"（昇格）または "import"（インポート）
@@ -181,10 +184,13 @@ export async function mergeCheck(inputActivities, inputRecords, mode ) {
       message = "現在のアカウントにインポートします。\n\nキャンセルするとインポートは中止されます。";
     }
     
-    const doMerge = confirm(message); // メッセージポップアップ
-   
-    // マージする場合に活動名が重複した場合、活動を分けるか統合するかを確認
-    if (doMerge) {
+    // メッセージポップアップでユーザがマージをキャンセルした場合
+    const doMerge = confirm(message); 
+    if (!doMerge) {
+      console.log("🛑 ユーザーがマージをキャンセルしました");
+      return false; // インポート時のアラート設定のため
+    }
+
       // 現行ユーザの活動データ一覧を取得
       const currentActivities = await getQueryData("activities", { userId: auth.currentUser.uid });
       // 現行ユーザのアクティビティ名一覧を取得（重複チェック用）
@@ -198,9 +204,7 @@ export async function mergeCheck(inputActivities, inputRecords, mode ) {
           "活動名が重複している可能性があります。\n統合して保存しますか？\n\nキャンセルすると活動を分けて保存します。"
         );
         // 分けて保存する場合、重複活動名リストは空にする（すべて登録対象にする）
-        if (sepFlg) {
-          dupActNames = [];
-        }
+      if (sepFlg) {dupActNames = [];}
       }
       //マージ処理
       await mergeUserData(inputActivities, inputRecords, currentActNames, dupActNames);
@@ -210,10 +214,6 @@ export async function mergeCheck(inputActivities, inputRecords, mode ) {
       window.dispatchEvent(new Event("auth-ready"));
       return true; // インポート時のアラート設定のため
 
-    } else {
-      console.log("🛑 ユーザーがマージをキャンセルしました");
-      return false; // インポート時のアラート設定のため
-    }
   } catch (error) {
     console.error("❌ データマージに失敗:", error);
     alert("データマージに失敗しました。");
@@ -221,8 +221,9 @@ export async function mergeCheck(inputActivities, inputRecords, mode ) {
   }
 }
 
-
+// -----------------------------
 // ログアウト
+// -----------------------------
 export async function logout() {
   try {
     await signOut(auth);
@@ -233,6 +234,8 @@ export async function logout() {
   }
 }
 
+// -----------------------------
 // HTMLから使うためにグローバル登録
+// -----------------------------
 window.loginWithGoogle = loginWithGoogle;
 window.logout = logout;

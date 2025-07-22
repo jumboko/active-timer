@@ -1,61 +1,72 @@
 // ================================
 // 活動記録タイマー
 // ================================
+// main.js
 
 // firebase-init.js を読み込む
 import { mergeCheck } from "./firebase-init.js";
 // Firestore 関連の操作関数を個別に import
 import { getQueryData, addQueryData, deleteQueryData } from './dataMerge.js';
 
-// ??????????????????????????????????????????????????????????????
-//const db = window.db;
-//const auth = window.auth;
-
-let startTime; // タイマーの開始時刻
-let elapsedTime = 0; // 経過時間（ms）
-let resumedTime = 0; // 再開時の累積時間
-let timerInterval; // リアルタイム表示用 setInterval の識別子
-let currentActivity = null; // 現在選択されている活動
 let currentPageId = "homePage"; // 現在表示されているページID
+let currentActivity = null;     // 現在選択されている活動
+let currentOrder = "asc";       // 現在選択されている活動の並び順
+let startTime;                  // タイマーの開始時刻
+let elapsedTime = 0;            // 経過時間（ms）
+let timerInterval;              // リアルタイム表示用 setInterval の識別子
+let wakeLock = null;            // Wake Lock スリープ防止用
 
-// 認証状態に変更があった場合の初期化処理
+// -----------------------------
+// 認証状態に変更があった場合の初期化処理(firebase-init.jsから呼び出し)
+// -----------------------------
 window.addEventListener("auth-ready", async () => {
-console.log("画面初期化");
   await loadActivities(); // 活動一覧の読み込み
   updateTimerDisplay(0); // タイマー初期表示を0で統一（0h00m00s<small>00</small>）
+  console.log("画面初期化");
 });
 
-// 画面状態がvisible(画面再アクティブ時)に変わり、startTimeがnullでない(タイマー動作中)場合
+// -----------------------------
+// 画面状態が表示または非表示に変更された場合に動作
+// -----------------------------
 document.addEventListener("visibilitychange", () => {
+  // 画面状態がvisible(画面再アクティブ)に変わり、startTimeがnullでない(タイマー動作中)場合
   if (document.visibilityState === "visible" && startTime) {
-    enableWakeLockCrossPlatform(); // ←  ← スリープ防止ON
+    disableWakeLock(); // 念のため既存のスリープ防止を解除
+    enableWakeLock();  // スリープ防止を再設定
   }
 });
 
-// ========== ページ切り替え ==========
+// -----------------------------
+// ページ切り替え
+// -----------------------------
 function showPage(id) {
-  // もし今の画面が timerPage で、離れようとしているならリセット
+  // 現画面がtimerPageで別画面に遷移する場合
   if (currentPageId === 'timerPage' && id !== 'timerPage') {
-    resetTimer(); // 測定キャンセルとみなす
-    disableWakeLockCrossPlatform(); //  wake lock を解除
+    resetTimer();       // 測定キャンセル
+    disableWakeLock();  // スリープ防止を解除
   }
 
-  // すべてのページを非表示にし、指定ページのみ表示
+  // 全ページを非表示にし、指定ページのみ表示
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   currentPageId = id; // 現在の画面idを記録
 }
 
-// ========== データ取得(活動名を取得し2画面の表示設定) ==========
+// ============================== データ取得 ==============================
+// -----------------------------
+// 画面初期化
+// -----------------------------
 async function loadActivities() {
-  // 活動リストとセレクトボックスを再描画
+  // 2種の活動名リスト要素にアクセス、初期化
   const list = document.getElementById('activityList');
   const allList = document.getElementById('allActivityList');
+  list.innerHTML = '';
+  allList.innerHTML = '';
+
+  // ユーザの活動名データ一覧を取得
   const snapshot = await getQueryData("activities", {userId: auth.currentUser.uid});
 
-  if (list) list.innerHTML = '';
-  if (allList) allList.innerHTML = '';
-
+  // 活動名データ一覧をループ
   snapshot.forEach(docSnap => {
     const activity = docSnap.actName;
 
@@ -83,8 +94,8 @@ async function loadActivities() {
       const delBtn = document.createElement('button');
       delBtn.classList.add('btn-del');
       delBtn.textContent = '削除'; // 表示名
-      delBtn.onclick = async () => {  //押下時の挙動設定
-        await deleteActivity(activity);
+    delBtn.onclick = async () => {  // 活動を削除するボタン追加
+      await deleteActivity(activity); // async/awaitで非同期処理の削除完了を待つ
       };
       li.appendChild(delBtn);
 
@@ -201,7 +212,7 @@ async function showActivityRecords(activity, highlightLast = false) {
 
 // ========== 活動管理 ==========
 async function addActivity() {
-  // 新規活動を登録
+  // テキストボックスへの入力内容を取得
   const input = document.getElementById('newActivity');
   const name = input.value.trim();
   if (!name) return; // 空欄の場合何もしない
@@ -219,35 +230,43 @@ async function addActivity() {
   } else {
     alert('同名の活動を登録済みです');
   }
-  input.value = '';
+  input.value = ''; // テキストボックスを空欄に戻す
 }
 
-// ========== タイマー ==========
+// ============================== タイマー ==============================
+// -----------------------------
 // 経過時間（ms）を "0h00m00s00" 形式にフォーマット
+// -----------------------------
 function formatTime(ms) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const hundredths = Math.floor((ms % 1000) / 10); // 小数点以下2桁
+  const totalSec = Math.floor(ms / 1000);         // ミリ秒から総秒数を計算(小数点切り捨てでミリ秒以下を除外)
+  const h = Math.floor(totalSec / 3600);          // 総秒数から「時間」を計算(小数点切り捨てで分以下を除外)
+  const min = Math.floor((totalSec % 3600) / 60); // 総秒数と時間(3600s)の余剰秒数から「分」を計算(小数点切り捨てで秒以下を除外)
+  const sec = totalSec % 60;                      // 総秒数と分(60s)の余剰秒数から「秒」を計算
+  const mSec = Math.floor((ms % 1000) / 10);      // 総ミリ秒と秒(1000ms)の余剰ミリ秒から2桁を算出(1/10の小数点切り捨てで1/1000秒を除外)
   return {
-    text: `${hours}h${String(minutes).padStart(2, '0')}m${String(seconds).padStart(2, '0')}s`,
-    small: String(hundredths).padStart(2, '0')
+    text: `${h}h${String(min).padStart(2, '0')}m${String(sec).padStart(2, '0')}s`, // h00m00s 形式
+    small: String(mSec).padStart(2, '0')  // 2桁で返す（1桁なら先頭に0を追加）
   };
 }
 
+// -----------------------------
 // タイマー表示を更新する（HTMLに反映）
+// -----------------------------
 function updateTimerDisplay(ms) {
   const time = formatTime(ms);
   document.getElementById('timeDisplay').innerHTML = `${time.text}<small>${time.small}</small>`;
 }
 
-// タイマー開始（リアルタイムで表示）
+// -----------------------------
+// タイマー開始（リアルタイムで表示）※タイマー再開と共通
+// -----------------------------
 function startTimer() {
-  startTime = Date.now();
+  startTime = Date.now();  // 現在時刻(ミリ秒) 
   timerInterval = setInterval(() => {
+     // 現在時刻からスタート時の時刻を引き経過時間を算出
+     // 再開に備え過去の累積時間(elapsedTime※初回は0)と合算
     updateTimerDisplay(elapsedTime + (Date.now() - startTime));
-  }, 10); // 10msごとに更新
+  }, 10); // 10msごとに更新(setIntervalで指定した間隔で関数を繰り返す)
 
     // ボタン表示制御
   document.getElementById('startBtn').style.display = 'none';
@@ -260,14 +279,20 @@ function startTimer() {
   enableWakeLockCrossPlatform(); // ← スリープ防止ON
 }
 
+// -----------------------------
 // タイマー停止（時間を加算し、リアルタイム更新停止）
+// -----------------------------
 function stopTimer() {
+  // startTimeがnull時(停止中)の実行で記録破損回避のため
   if (!startTime) return;
-  clearInterval(timerInterval);
-  elapsedTime += Date.now() - startTime;
-  startTime = null;
 
-  updateTimerDisplay(elapsedTime);
+  // setIntervalのループ停止で画面表示の更新を停止
+  clearInterval(timerInterval);
+  // リスタートに備えelapsedTimeに累積時間を記録(過去累積時間と現測定時間の合算)
+  elapsedTime += Date.now() - startTime;
+  startTime = null; // 初期化と停止フラグの役割
+
+  updateTimerDisplay(elapsedTime); // 最終的な記録を画面表示
 
     // ボタン表示制御
   document.getElementById('startBtn').style.display = 'none';
@@ -301,23 +326,24 @@ async function saveTimer() {
   // 記録を保存
   await addQueryData("records", {
     actName: currentActivity,
-    time: elapsedTime / 1000,
+    time: elapsedTime / 1000, // 秒で登録
     date: new Date().toLocaleString(),
     userId: auth.currentUser.uid
   });
 
-  // タイマーリセット
-  resetTimer();
-
-  showActivityRecords(currentActivity, true); // 保存後に記録表示ページへ
+  resetTimer(); // タイマーリセット
+  showActivityRecords(true); // 保存後に記録表示ページへ
 }
 
+// -----------------------------
 // タイマーリセット処理
+// -----------------------------
 function resetTimer() {
-  clearInterval(timerInterval); // インターバル停止
-  startTime = null;
-  elapsedTime = 0;
-  updateTimerDisplay(0); // 表示を0にリセット
+  // setIntervalのループ停止で画面表示の更新を停止
+  clearInterval(timerInterval);
+  startTime = null;      // 初期化と停止フラグの役割
+  elapsedTime = 0;       // 累積時間を初期化
+  updateTimerDisplay(0); // 画面表示を0にリセット
 
   // ボタン表示制御：初期状態に戻す
   document.getElementById('startBtn').style.display = 'inline-block';
@@ -410,14 +436,16 @@ async function enableWakeLockCrossPlatform() {
     } catch (e) {
       console.warn('❌ Wake Lock取得失敗:', e);
     }
-  // ❌ Wake Lock が使えない環境
+  // Wake Lock が使えない環境
   } else {
     console.log('🟡 Wake Lock 非対応の環境です');
   }
 }
 
-// タイマー終了時などに呼び出す
-async function disableWakeLockCrossPlatform() {
+// -----------------------------
+// タイマー測定時のスリープ防止解除
+// -----------------------------
+async function disableWakeLock() {
   // Wake Lock API を解除
   if (wakeLock) {
     try {
@@ -437,13 +465,13 @@ async function disableWakeLockCrossPlatform() {
 // バックアップ機能：activities + records を1つのJSONで保存
 async function downloadBackup() {
   if (!auth.currentUser?.uid) { // 基本起こりえない
-    alert("ログイン状態が確認できませんでした。もう一度ログインしてください。");
+    alert("ユーザー情報の取得に失敗しました。もう一度お試しください。");
     return;
   }
   const userId = auth.currentUser.uid;
 
-  const bkFlg = confirm("データをバックアップしますか？"); // メッセージポップアップ
-  if (!bkFlg) {return;} //キャンセルの場合は何もしない
+  // メッセージポップアップ
+  if (!confirm("データをバックアップしますか？")) return; //キャンセルの場合は何もしない
 
   // Firestoreからデータ取得
   const [activities, records] = await Promise.all([
@@ -451,6 +479,7 @@ async function downloadBackup() {
     getQueryData("records", { userId }),
   ]);
 
+  // バックアップデータ生成
   const data = {
     activities,
     records,
@@ -467,21 +496,22 @@ async function downloadBackup() {
   URL.revokeObjectURL(url);
 }
 
+// -----------------------------
 // インポート処理：JSONファイル読み込み＆登録
+// -----------------------------
 async function handleImportFile(event) {
-  const input = document.getElementById("importFile"); // ← input 要素の参照
+  if (!auth.currentUser?.uid) { // 基本起こりえない
+    alert("ユーザー情報の取得に失敗しました。もう一度お試しください。");
+    return;
+  }
+  
+  const input = document.getElementById("importFile"); // input 要素の参照
   const file = input.files[0];
   if (!file) return;
 
   try {
-    const text = await file.text();
-    const backupData = JSON.parse(text);
-
-    // ログイン状態の確認
-    if (!auth.currentUser?.uid) { // 基本起こりえない
-      alert("ログイン状態が確認できませんでした。もう一度ログインしてください。");
-      return;
-    }
+    const text = await file.text();      // 文字列で取得 
+    const backupData = JSON.parse(text); // オブジェクト形式に変換
 
     // インポート対象のデータを取得（存在しない場合は空配列に）
     const importedActivities = backupData.activities || [];
@@ -504,7 +534,10 @@ async function handleImportFile(event) {
   }
 }
 
+// ============================== グローバルセット ==============================
+// -----------------------------
 // HTMLから呼び出す関数を明示的に登録
+// -----------------------------
 const globalFunctions = {
   showPage, addActivity, startTimer, stopTimer, resumeTimer, saveTimer, resetTimer, 
   backTodetailPage, backToTimer, downloadBackup, handleImportFile 

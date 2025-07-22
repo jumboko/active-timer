@@ -1,17 +1,23 @@
 // ================================
 // データマージ用
 // ================================
-
 // dataMerge.js
+
 import {
   collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { validateFields } from './validation.js';
 
+// ??????????????????????????????????????????????????????????????
+//const db = window.db;
+//const auth = window.auth;
+
+// -----------------------------
 // inputデータを既存アカウントへマージする。活動名重複の扱いは引数で制御。
 // 重複対象無　　　　　　　　　　　全てinput
 // 重複対象有 &　マージせず分ける　全てinput
 // 重複対象有 &　マージする　　　　一部input(重複活動名はスルー)
+// -----------------------------
 export async function mergeUserData(inputActivities, inputRecords, currentActNames, dupActNames) {
   const currentUid = auth.currentUser.uid; // 再ログイン後のUIDを使用
   // 並列でまとめて登録用の変数
@@ -30,7 +36,7 @@ export async function mergeUserData(inputActivities, inputRecords, currentActNam
     if (!dupActNames.includes(setActName)) {
       // 名称の重複回避のため活動名を更新
        setActName = getUniqueName(inputAct.actName, currentActNames);
-    
+
       // 新たな活動を追加（あとでまとめて Promise.all）
       actAdds.push(addQueryData("activities", {
         ...inputAct,         // 取得情報をそのまま展開
@@ -71,7 +77,9 @@ export async function mergeUserData(inputActivities, inputRecords, currentActNam
   await Promise.all([...actAdds, ...recAdds]);
 }
 
+// -----------------------------
 // 既存名称をもとに、重複しない名称を生成する。
+// -----------------------------
 export function getUniqueName(checkName, currentNames) {
   // そのまま使えるかチェック
   if (!currentNames.includes(checkName)) {
@@ -89,9 +97,10 @@ export function getUniqueName(checkName, currentNames) {
   return candidateName; // 重複しない名前が見つかったら返す
 }
 
-/**
- * 匿名ユーザーの削除予約を deleteQueue に登録する。
- * 実際の削除は後日バッチ処理などで行う。
+// -----------------------------
+// 匿名ユーザーの削除予約を deleteQueue に登録する。
+// 実際の削除は後日バッチ処理などで行う。
+/** ----------------------------
  * @param {string} anonUid - 匿名ユーザーのUID
  */
 export async function reserveDelUser(anonUid) {
@@ -108,10 +117,10 @@ export async function reserveDelUser(anonUid) {
   }
 }
 
-/**
- * 匿名ユーザーの活動と記録を削除する。
- * @param {string} collectionName - 対象コレクション名（例: "activities", "records"）
- * @param {string} userId - 削除対象の userId（匿名UIDなど）
+// -----------------------------
+// 匿名ユーザーの活動と記録を削除する。
+/** ----------------------------
+ * @param {string} uid - 削除対象の userId（匿名UIDなど）
  */
 export async function deleteAnonUserData (uid) {
   try {
@@ -122,10 +131,11 @@ export async function deleteAnonUserData (uid) {
   }
 }
 
-/**
- * 特定ユーザーの指定コレクション内の全ドキュメントを削除する。
+// -----------------------------
+// 特定ユーザーの指定コレクション内の全ドキュメントを削除する。
+/** ----------------------------
  * @param {string} collectionName - 対象コレクション名（例: "activities", "records"）
- * @param {string} userId - 削除対象の userId（匿名UIDなど）
+ * @param {string} uid - 削除対象の userId（匿名UIDなど）
  */
 export async function deleteCollectionByUser(collectionName, uid) {
   try {
@@ -142,8 +152,9 @@ export async function deleteCollectionByUser(collectionName, uid) {
   }
 }
 
-/**
- * Firestore の任意のコレクションから、指定された複数のフィールド条件（where句）に一致するデータを取得する。
+// -----------------------------
+// Firestore の任意のコレクションから、指定された複数のフィールド条件（where句）に一致するデータを取得する。
+/** ----------------------------
  * @param {string} collectionName - "activities" や "records" などのコレクション名
  * @param {Object} filters - 取得条件のフィールドと値の組（例: { userId: ..., actName: ... }）
  * @returns {Promise<Array<Object>>} 各ドキュメントの { id, ...データ } を配列で返す
@@ -162,14 +173,14 @@ export async function getQueryData(collectionName, filters = {}) {
   }));
 }
 
-/**
- * Firestore の指定コレクションへ、指定されたデータを新規ドキュメントとして登録する。
- * - validateFields() で必須項目の存在と補完をチェック
- * - userId や recOrder などもここで自動補完
- * - 不正なデータはスキップ（null時）
- * 
+// -----------------------------
+// Firestore の指定コレクションへ、指定されたデータを新規ドキュメントとして登録する。
+//  - validateFields() で必須項目の存在と補完をチェック
+//  - userId や recOrder などもここで自動補完
+//  - 不正なデータはスキップ（null時）
+/** ----------------------------
  * @param {string} collectionName - "activities" や "records" などのコレクション名
- * @param {Object} rawData - 登録するフィールドのデータ（例: { actName, userId, ... }）
+ * @param {Object} data - 登録するフィールドのデータ（例: { actName, userId, ... }）
  * @returns {Promise<DocumentReference|undefined>} Firestoreへの追加結果（失敗時は何も返さない）
  */
 export async function addQueryData(collectionName, data = {}) {
@@ -183,8 +194,9 @@ export async function addQueryData(collectionName, data = {}) {
   return await addDoc(collection(db, collectionName), validData);
 }
 
-/**
- * Firestore の指定コレクションからドキュメントIDで1件削除する  ???????????????????????????????????????????トライキャッチは最終的に消す？
+// -----------------------------
+// Firestore の指定コレクションからドキュメントIDで1件削除する
+/** ----------------------------
  * @param {string} collectionName - "activities" や "records" などのコレクション名
  * @param {string} docId - 削除対象のドキュメントID
  * @returns {Promise<void>} 削除処理の Promise を返す（await 可能に）
