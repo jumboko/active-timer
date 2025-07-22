@@ -68,133 +68,108 @@ async function loadActivities() {
 
   // 活動名データ一覧をループ
   snapshot.forEach(docSnap => {
-    const activity = docSnap.actName;
+    const activity = docSnap.actName; // 活動名データから活動名取得
+    const order = docSnap.recOrder || "asc";// 活動名データから並び順取得 ※デフォルトは「昇順」
 
-    // 活動リストに追加し、クリックでタイマー画面へ遷移
-    if (list) {
-      const li = document.createElement('li');
-      li.classList.add('activityName');
-      li.textContent = activity; // 表示名
-      li.onclick = () => showTopTimes(activity); // 上位タイムを表示
-      list.appendChild(li);
-    }
+    // 活動選択画面用（activityList）のエレメントを構築
+    list.appendChild(makeCommonActList(activity, order, true));
 
-    // 記録表示画面用（allActivityList）、クリックで活動毎の記録一覧へ遷移
-    if (allList) {
-      const li = document.createElement('li');
-
-      // 活動名表示
-      const span = document.createElement('span');
-      span.classList.add('activityName');
-      span.textContent = activity; // 表示名
-      span.onclick = () => showActivityRecords(activity); //押下時の挙動設定
-      li.appendChild(span);
-
-      // 削除ボタン表示
-      const delBtn = document.createElement('button');
-      delBtn.classList.add('btn-del');
-      delBtn.textContent = '削除'; // 表示名
-    delBtn.onclick = async () => {  // 活動を削除するボタン追加
-      await deleteActivity(activity); // async/awaitで非同期処理の削除完了を待つ
-      };
-      li.appendChild(delBtn);
-
-      allList.appendChild(li);
-    }
-  });
-}
-
-// ========== 記録表示 ==========
-async function showTopTimes(activity) {
-  // 上位3タイムを表示
-  const list = document.getElementById('topTimes');
-  list.innerHTML = '';
-
-  // 活動データから並び順（recOrder）を取得
-  const activitySnap = await getQueryData("activities", {userId: auth.currentUser.uid, actName: activity});
-  const order = activitySnap[0]?.recOrder || "asc";// デフォルトは「昇順」
-
-  // 記録の取得・フィルタリング
-  const records = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
-
-  const top3 = records
-  .sort((a, b) => order === "asc" ? a.time - b.time : b.time - a.time)
-  .slice(0, 3); // ソートし上位3件取得
-  
-  // 表示処理
-  top3.forEach((record, index) => {
+    // 活動記録選択画面用（allActivityList）のエレメントを構築
     const li = document.createElement('li');
-
-    // 順位表示
-    const rankSpan = document.createElement('span');
-    rankSpan.classList.add('rank');
-    rankSpan.textContent = `${index + 1}位`;
-    li.appendChild(rankSpan);
-
-    // タイムを表示
-    const recordSpan = document.createElement('span');
-    recordSpan.classList.add('recordText');
-    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
-    const shortDate = record.date.replace(/^20/, ''); // 2025-01-01 → 25-01-01
-    recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${shortDate}）`; // 表示名
-    li.appendChild(recordSpan);
-
-    list.appendChild(li);
-  });
-  currentActivity = activity;
-  document.getElementById('timerTitle').textContent = `${activity}のタイマー`; // ← 活動名を表示！
-  showPage('timerPage');
-}
-
-async function showActivityRecords(activity, highlightLast = false) {
-  // 特定の活動の全記録を表示（必要なら最後の記録をハイライト）
-  const list = document.getElementById('activityRecordList');
-  list.innerHTML = '';
-
-  // 活動データから並び順（recOrder）を取得
-  const activitySnap = await getQueryData("activities", {userId: auth.currentUser.uid, actName: activity});
-  const order = activitySnap[0]?.recOrder || "asc";// デフォルトは「昇順」
-
-  // 記録取得
-  const allRecords = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
-
-  // レコード登録時の場合、最新の日付を取得（ハイライト用）
-  let newestTime = 0;
-  if (highlightLast) {
-    newestTime = Math.max(...allRecords.map(r => new Date(r.date).getTime()));
-  }
-
-  // 並び替えて表示
-  allRecords.sort((a, b) => order === "asc" ? a.time - b.time : b.time - a.time);
-
-  // 表示処理
-  allRecords.forEach((record, index) => {
-    const li = document.createElement('li');
-
-    // 削除や照合用に日付・タイムを埋め込む
-    li.dataset.date = record.date;
-    li.dataset.time = record.time;
-
-    // 順位表示
-    const rankSpan = document.createElement('span');
-    rankSpan.classList.add('rank');
-    rankSpan.textContent = `${index + 1}位`;
-    li.appendChild(rankSpan);
-
-    // タイムを表示
-    const recordSpan = document.createElement('span');
-    recordSpan.classList.add('recordText');
-    const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
-    const shortDate = record.date.replace(/^20/, ''); // 2025-01-01 → 25-01-01
-    recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${shortDate}）`; // 表示名
-    li.appendChild(recordSpan);
+    li.appendChild(makeCommonActList(activity, order, false));
 
     // 削除ボタン表示
     const delBtn = document.createElement('button');
     delBtn.classList.add('btn-del');
     delBtn.textContent = '削除'; // 表示名
-    delBtn.onclick = async () => {//押下時の挙動設定
-      await deleteRecord(activity, record);
+    delBtn.onclick = async () => {  // 活動を削除するボタン追加
+      await deleteActivity(activity); // async/awaitで非同期処理の削除完了を待つ
+    };
+    li.appendChild(delBtn);
+
+    allList.appendChild(li);
+  });
+}
+
+// -----------------------------
+// 共通の活動名エレメント作成
+// -----------------------------
+function makeCommonActList(activity, order, isTopTimes = true) {
+  // 対象リストで設定するエレメントが異なる
+  const element = document.createElement(isTopTimes ? 'li' : 'span');
+
+  // 共通のエレメントを構築
+  element.classList.add('activityName');
+  element.textContent = activity; // 表示名
+  element.onclick = () => {
+    // グローバル変数に設定
+    currentActivity = activity; 
+    currentOrder = order;
+    //フラグに応じて上位タイムまたは記録一覧を表示するボタン追加
+    isTopTimes ? showTopTimes() : showActivityRecords();
+  };
+  return element;
+}
+
+// -----------------------------
+// 対象の活動の上位タイムを表示する
+// -----------------------------
+async function showTopTimes() {
+  // 上位3タイムリスト要素にアクセス、初期化
+  const list = document.getElementById('topTimes');
+  list.innerHTML = '';
+
+  // 対象活動の記録取得
+  const records = await getQueryData("records", {userId: auth.currentUser.uid, actName: currentActivity});
+  // ソートし上位3件取得
+  const top3 = records
+  .sort((a, b) => currentOrder === "asc" ? a.time - b.time : b.time - a.time)
+  .slice(0, 3);
+  
+  // 上位3タイムリストをループ(第一引数：トップタイムデータ、第二引数:インデックス番号)
+  top3.forEach((record, index) => {
+    // 上位3タイムリスト表示のエレメントを構築
+    list.appendChild(makeCommonRecList(record, index));
+  });
+  document.getElementById('timerTitle').textContent = `${currentActivity}のタイマー`; // 活動名を表示
+  showPage('timerPage');
+}
+
+// -----------------------------
+// 対象の活動の記録一覧を表示する（登録直後の記録をハイライト）
+// -----------------------------
+async function showActivityRecords(highlightLast = false) {
+  // 対象活動の全記録リスト要素にアクセス、初期化
+  const list = document.getElementById('activityRecordList');
+  list.innerHTML = '';
+
+  // 対象活動の記録取得
+  const records = await getQueryData("records", {userId: auth.currentUser.uid, actName: currentActivity});
+
+  // レコード登録時の場合、最新の日付を取得（ハイライト用）
+  let newestTime = 0;
+  if (highlightLast) {
+    newestTime = Math.max(...records.map(r => new Date(r.date).getTime()));
+  }
+
+  // 記録の並び替え
+  records.sort((a, b) => currentOrder === "asc" ? a.time - b.time : b.time - a.time);
+
+  // 記録一覧リストをループ(第一引数：記録データ、第二引数:インデックス番号)
+  records.forEach((record, index) => {
+    // 記録一覧リストのエレメントを構築
+    const li = makeCommonRecList(record, index);
+
+    // 削除や照合用に日付・タイムを埋め込む
+    li.dataset.date = record.date;
+    li.dataset.time = record.time;
+
+    // 削除ボタン表示
+    const delBtn = document.createElement('button');
+    delBtn.classList.add('btn-del');
+    delBtn.textContent = '削除'; // 表示名
+    delBtn.onclick = async () => {   //押下時の挙動設定
+      await deleteRecord(currentActivity, record);
     };
     li.appendChild(delBtn);
 
@@ -205,12 +180,38 @@ async function showActivityRecords(activity, highlightLast = false) {
 
     list.appendChild(li);
   });
-  currentActivity = activity;
-  document.getElementById('detailTitle').innerHTML = `${activity}の<ruby>記録<rt>きろく</rt></ruby>`; // ← 活動名を表示！
+  document.getElementById('detailTitle').innerHTML = `${currentActivity}の<ruby>記録<rt>きろく</rt></ruby>`; // 活動名を表示
   showPage('detailPage');
 }
 
-// ========== 活動管理 ==========
+// -----------------------------
+// 共通の記録エレメント作成
+// -----------------------------
+function makeCommonRecList(record, index) {
+  // エレメントを構築
+  const li = document.createElement('li');
+
+  // 順位表示
+  const rankSpan = document.createElement('span');
+  rankSpan.classList.add('rank');
+  rankSpan.textContent = `${index + 1}位`; // 表示名
+  li.appendChild(rankSpan);
+
+  // タイムを表示
+  const recordSpan = document.createElement('span');
+  recordSpan.classList.add('recordText');
+  const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
+  const shortDate = record.date.replace(/^20/, ''); // 2025-01-01 → 25-01-01
+  recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${shortDate}）`; // 表示名
+  li.appendChild(recordSpan);
+
+  return li;
+}
+
+// ============================== 活動管理 ==============================
+// -----------------------------
+  // 新規活動を登録
+// -----------------------------
 async function addActivity() {
   // テキストボックスへの入力内容を取得
   const input = document.getElementById('newActivity');
@@ -269,14 +270,10 @@ function startTimer() {
   }, 10); // 10msごとに更新(setIntervalで指定した間隔で関数を繰り返す)
 
     // ボタン表示制御
-  document.getElementById('startBtn').style.display = 'none';
-  document.getElementById('stopBtn').style.display = 'inline-block';
-  document.getElementById('resumeBtn').style.display = 'none';
-  document.getElementById('saveBtn').style.display = 'none';
-  document.getElementById('resetBtn').style.display = 'none';
+  setTimerBtn({stopBtn: 'inline-block'});
 
-  disableWakeLockCrossPlatform(); // ← 念のため既存の Wake Lock を解除
-  enableWakeLockCrossPlatform(); // ← スリープ防止ON
+  disableWakeLock(); // 念のため既存のスリープ防止を解除
+  enableWakeLock();  // スリープ防止を設定
 }
 
 // -----------------------------
@@ -284,7 +281,7 @@ function startTimer() {
 // -----------------------------
 function stopTimer() {
   // startTimeがnull時(停止中)の実行で記録破損回避のため
-  if (!startTime) return;
+  if (!startTime) return; 
 
   // setIntervalのループ停止で画面表示の更新を停止
   clearInterval(timerInterval);
@@ -295,33 +292,14 @@ function stopTimer() {
   updateTimerDisplay(elapsedTime); // 最終的な記録を画面表示
 
     // ボタン表示制御
-  document.getElementById('startBtn').style.display = 'none';
-  document.getElementById('stopBtn').style.display = 'none';
-  document.getElementById('resumeBtn').style.display = 'inline-block';
-  document.getElementById('saveBtn').style.display = 'inline-block';
-  document.getElementById('resetBtn').style.display = 'inline-block';
+  setTimerBtn({resumeBtn:'inline-block', saveBtn:'inline-block', resetBtn:'inline-block'});
 
-  disableWakeLockCrossPlatform(); // ← スリープ防止OFF
+  disableWakeLock(); // スリープ防止を解除
 }
 
-// タイマー再開（前回までの時間を継続）
-function resumeTimer() {
-  startTime = Date.now();
-  timerInterval = setInterval(() => {
-    updateTimerDisplay(elapsedTime + (Date.now() - startTime));
-  }, 10);
-
-  // ボタン表示制御
-  document.getElementById('startBtn').style.display = 'none';
-  document.getElementById('stopBtn').style.display = 'inline-block';
-  document.getElementById('resumeBtn').style.display = 'none';
-  document.getElementById('saveBtn').style.display = 'none';
-  document.getElementById('resetBtn').style.display = 'none';
-
-  enableWakeLockCrossPlatform(); // ← スリープ防止ON
-}
-
+// -----------------------------
 // タイマー保存
+// -----------------------------
 async function saveTimer() {
   // 記録を保存
   await addQueryData("records", {
@@ -346,89 +324,34 @@ function resetTimer() {
   updateTimerDisplay(0); // 画面表示を0にリセット
 
   // ボタン表示制御：初期状態に戻す
-  document.getElementById('startBtn').style.display = 'inline-block';
-  document.getElementById('stopBtn').style.display = 'none';
-  document.getElementById('resumeBtn').style.display = 'none';
-  document.getElementById('saveBtn').style.display = 'none';
-  document.getElementById('resetBtn').style.display = 'none';
+  setTimerBtn({startBtn: 'inline-block'});
 }
 
-// タイマー画面から活動毎の記録一覧へ
-function backTodetailPage() {
-  showActivityRecords(currentActivity); // 活動毎の記録一覧へ
-}
+// -----------------------------
+// タイマーボタン表示制御
+// -----------------------------
+function setTimerBtn(config) {
+  // ボタンidと状態のオブジェクト作成、引数で上書き
+  const buttons = {
+    startBtn: 'none',
+    stopBtn: 'none',
+    resumeBtn: 'none',
+    saveBtn: 'none',
+    resetBtn: 'none',
+    ...config // 引数のオブジェクトを展開し表示するボタンを上書き
+  };
 
-// 活動毎の記録一覧へからタイマー画面へ
-function backToTimer() {
-  showTopTimes(currentActivity); // タイマー画面へ
-}
-
-// 活動削除
-async function deleteActivity(name) {
-  if (!confirm(`活動「${name}」と、その記録を削除すると復元できません。実行しますか？`)) return;
-
-  // activities コレクションから活動のdocIdを取得
-  const actDoc = await getQueryData("activities", {userId: auth.currentUser.uid, actName: name});
-
-  if (actDoc[0]) {
-     // ユーザで活動は重複しない為、1件削除
-    await deleteQueryData("activities", actDoc[0].id);
-  }
-
-  // records コレクションからその活動に属する記録を削除???????????????????????????????????????????????????こっちはifいらんの？
-  const recSnaps = await getQueryData("records", {userId: auth.currentUser.uid, actName: name});
-  const deletePromises = recSnaps.map(r => deleteQueryData("records", r.id));
-  await Promise.all(deletePromises); // 削除終了まで待機
-
-  // 表示更新
-  await loadActivities();
-}
-
-// タイム記録削除
-async function deleteRecord(activity, target) {
-  if (!confirm("この記録を削除すると復元できません。実行しますか？")) return;
-
-  // 活動名＋日時が一致する記録だけ除外して保存し直す
-  const recSnaps = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
-  const targetDoc = recSnaps.find(data =>data.time === target.time && data.date === target.date);
-
-  if (targetDoc) {
-    await deleteQueryData("records", targetDoc.id);
-    // DOM から該当 li を削除（innerHTML='' を使わない）
-    const list = document.getElementById('activityRecordList');
-    const allLis = Array.from(list.children);
-
-    // 行を削除
-    const liToRemove = Array.from(list.children).find(li =>
-      li.dataset.date === target.date && parseFloat(li.dataset.time) === target.time
-    );
-
-    // htmlの表示のリストから削除した記録を除く
-    if (liToRemove) liToRemove.remove();
-
-    // 順位を再設定
-    const remainingLis = document.querySelectorAll('#activityRecordList li');
-    remainingLis.forEach((li, index) => {
-      const rankSpan = li.querySelector('.rank');
-      if (rankSpan) {
-        rankSpan.textContent = `${index + 1}位`;
-      }
-    });
+  // オブジェクトを配列化しループ、ステータスを画面に反映しボタン表示制御
+  for (const [id, status] of Object.entries(buttons)) {
+    document.getElementById(id).style.display = status;
   }
 }
 
-
-
-let wakeLock = null; // Wake Lock オブジェクトを保持（Android用）
-
-// iPhone/iPad/iPodか？
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-// Safariか？（Chrome for iOS は除外）
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-// タイマー開始時などに呼び出す
-async function enableWakeLockCrossPlatform() {
-  // ✅ Wake Lock API が使えるブラウザ
+// -----------------------------
+// タイマー測定時のスリープ防止設定
+// -----------------------------
+async function enableWakeLock() {
+  // Wake Lock API が使えるブラウザ
   if ('wakeLock' in navigator) {
     try {
       wakeLock = await navigator.wakeLock.request('screen');
@@ -458,11 +381,86 @@ async function disableWakeLock() {
   }
 }
 
+// ============================== 画面遷移 ==============================
+// -----------------------------
+// タイマー画面から活動毎の記録一覧へ
+// -----------------------------
+function backTodetailPage() {
+  showActivityRecords(); // 活動毎の記録一覧へ
+}
 
+// -----------------------------
+// 活動毎の記録一覧へからタイマー画面へ
+// -----------------------------
+function backToTimer() {
+  showTopTimes(); // タイマー画面へ
+}
 
+// ============================== 削除処理 ==============================
+// -----------------------------
+// 活動削除（紐づく記録も同時に）
+// -----------------------------
+async function deleteActivity(name) {
+  if (!confirm(`活動「${name}」と、その記録を削除すると復元できません。実行しますか？`)) return;
 
+  // activitiesコレクションから活動のdocIdを取得
+  const actDoc = await getQueryData("activities", {userId: auth.currentUser.uid, actName: name});
 
+  // ユーザ内で活動は重複しない為、1件削除
+  if (actDoc[0]) {
+    await deleteQueryData("activities", actDoc[0].id);
+  }
+
+  // records コレクションからその活動に属する記録を削除
+  const recSnaps = await getQueryData("records", {userId: auth.currentUser.uid, actName: name});
+  const deletePromises = recSnaps.map(r => deleteQueryData("records", r.id)); // 0件の場合は何もしない
+  await Promise.all(deletePromises); // 削除終了まで待機
+
+  // 表示更新
+  await loadActivities();
+}
+
+// -----------------------------
+// 記録削除
+// -----------------------------
+async function deleteRecord(activity, target) {
+  if (!confirm("この記録を削除すると復元できません。実行しますか？")) return;
+
+  // 活動名＋日時が一致する記録情報を取得
+  const recSnaps = await getQueryData("records", {userId: auth.currentUser.uid, actName: activity});
+  const targetDoc = recSnaps.find(data =>data.time === target.time && data.date === target.date);
+
+    // データがなければ終了
+  if (!targetDoc) {
+    console.warn("削除対象の記録が見つかりませんでした。", target);
+    await loadActivities(); // 別画面からのDBの更新を想定し画面を更新
+    return; 
+  }
+
+  await deleteQueryData("records", targetDoc.id); // 対象の記録をDB削除
+
+  // DOMから記録一覧リストを取得し削除する行を特定
+  const list = document.getElementById('activityRecordList');
+  const targetLi = Array.from(list.children).find(li =>
+    li.dataset.date === target.date && parseFloat(li.dataset.time) === target.time
+  );
+
+  // htmlのDOMの表示リストからDB削除した記録を取り除く
+  if (targetLi) targetLi.remove();
+
+  // DOMの残りのリストで順位を再計算して更新
+  const remainingLis = list.querySelectorAll('li');
+  // 記録一覧リストの中身をループ
+  remainingLis.forEach((li, index) => {
+    const rankSpan = li.querySelector('.rank'); // 中身から順位のエレメント取得
+    rankSpan.textContent = `${index + 1}位`;    // 順位を再設定
+  });
+}
+
+// ============================== バックアップ ==============================
+// -----------------------------
 // バックアップ機能：activities + records を1つのJSONで保存
+// -----------------------------
 async function downloadBackup() {
   if (!auth.currentUser?.uid) { // 基本起こりえない
     alert("ユーザー情報の取得に失敗しました。もう一度お試しください。");
@@ -539,7 +537,7 @@ async function handleImportFile(event) {
 // HTMLから呼び出す関数を明示的に登録
 // -----------------------------
 const globalFunctions = {
-  showPage, addActivity, startTimer, stopTimer, resumeTimer, saveTimer, resetTimer, 
+  showPage, addActivity, startTimer, stopTimer, saveTimer, resetTimer, 
   backTodetailPage, backToTimer, downloadBackup, handleImportFile 
 };
 Object.assign(window, globalFunctions);

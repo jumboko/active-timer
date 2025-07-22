@@ -44,43 +44,23 @@ console.log("onAuthStateChanged 認証変更キャッチ", user);
 // 認証状態に応じて画面表示の更新
 // -----------------------------
 function updateUIForUser(user) {
-  const loginBtn = document.querySelector("#authStatus button[onclick='loginWithGoogle()']");
-  const logoutBtn = document.querySelector("#authStatus button[onclick='logout()']");
-  const userInfo = document.getElementById("userInfo");
-  const emailSpan = document.querySelector('.emailText');
-  const tooltipSpan = document.querySelector('.tooltip');
-
   if (user) {
     console.log("UID取得:", user.uid);
 
     if (user.isAnonymous) {
       // 匿名ユーザーは未ログイン扱い（ログインボタンだけ表示）
-      loginBtn.style.display = "inline-block";
-      logoutBtn.style.display = "none";
-      userInfo.style.display = "none";
-      emailSpan.textContent = "";
-      tooltipSpan.textContent = "";
+      setAuthBtn(user, false);
 
     } else {
-      // Googleログインなどの場合はログイン状態として表示
-      loginBtn.style.display = "none";
-      logoutBtn.style.display = "inline-block";
-      userInfo.style.display = "inline-block";
-
-      // ユーザ情報表示
-      const userEmail = user.email || "不明なユーザー";
-      emailSpan.textContent = userEmail;
-      tooltipSpan.textContent = userEmail;
+      // Googleログイン等の場合はログイン状態として表示
+      setAuthBtn(user, true);
     }
     // 初期化のためカスタムイベントを dispatch（main.js）※userがnullの場合、匿名ログイン処理の後画面が初期化
     window.dispatchEvent(new Event("auth-ready"));
   } else {
     console.log("ログアウトまたは初回アクセスでuidがnull");
-    loginBtn.style.display = "inline-block";
-    logoutBtn.style.display = "none";
-    userInfo.style.display = "none";
-    emailSpan.textContent = "";
-    tooltipSpan.textContent = "";
+    // 未ログイン（ログインボタンだけ表示）
+    setAuthBtn(user, false);
 
     // 匿名でログイン処理を実行
     signInAnonymously(auth)
@@ -95,7 +75,39 @@ function updateUIForUser(user) {
   showPage("homePage"); // ログインまたはログアウト後はホーム画面に戻る
 }
 
+// -----------------------------
+// ヘッダーボタン表示制御
+// -----------------------------
+function setAuthBtn(user, loginFlg) {
+  const loginBtn = document.querySelector("#authStatus button[onclick='loginWithGoogle()']");
+  const logoutBtn = document.querySelector("#authStatus button[onclick='logout()']");
+  const userInfo = document.getElementById("userInfo");
+  const emailSpan = document.querySelector('.emailText');
+  const tooltipSpan = document.querySelector('.tooltip');
+
+  // ログイン済の場合
+  if (loginFlg) {
+    loginBtn.style.display = "none";
+    logoutBtn.style.display = "inline-block";
+    userInfo.style.display = "inline-block";
+    // ユーザ情報表示
+    const userEmail = user.email || "不明なユーザー";
+    emailSpan.textContent = userEmail;
+    tooltipSpan.textContent = userEmail;
+
+  // 未ログインの場合
+  } else {
+    loginBtn.style.display = "inline-block";
+    logoutBtn.style.display = "none";
+    userInfo.style.display = "none";
+    emailSpan.textContent = "";
+    tooltipSpan.textContent = "";
+  }
+}
+
+// -----------------------------
 // Googleログイン（ポップアップ）
+// -----------------------------
 export async function loginWithGoogle() {
   if (!auth.currentUser) {
     alert("ユーザー情報の取得に失敗しました。もう一度お試しください。");
@@ -191,28 +203,28 @@ export async function mergeCheck(inputActivities, inputRecords, mode ) {
       return false; // インポート時のアラート設定のため
     }
 
-      // 現行ユーザの活動データ一覧を取得
-      const currentActivities = await getQueryData("activities", { userId: auth.currentUser.uid });
-      // 現行ユーザのアクティビティ名一覧を取得（重複チェック用）
-      const currentActNames = currentActivities.map(act => act.actName);
+    // 現行ユーザの活動データ一覧を取得
+    const currentActivities = await getQueryData("activities", { userId: auth.currentUser.uid });
+    // 現行ユーザのアクティビティ名一覧を取得（重複チェック用）
+    const currentActNames = currentActivities.map(act => act.actName);
 
-      // inputユーザと現行ユーザで重複している活動名の一覧を取得
-      let dupActNames = inputActivities.map(act => act.actName).filter(name => currentActNames.includes(name));
-      // 重複がある場合
-      if (dupActNames.length > 0) {
-        const sepFlg = !confirm(
-          "活動名が重複している可能性があります。\n統合して保存しますか？\n\nキャンセルすると活動を分けて保存します。"
-        );
-        // 分けて保存する場合、重複活動名リストは空にする（すべて登録対象にする）
+    // inputユーザと現行ユーザで重複している活動名の一覧を取得
+    let dupActNames = inputActivities.map(act => act.actName).filter(name => currentActNames.includes(name));
+    // 重複がある場合
+    if (dupActNames.length > 0) {
+      const sepFlg = !confirm(
+        "活動名が重複している可能性があります。\n統合して保存しますか？\n\nキャンセルすると活動を分けて保存します。"
+      );
+      // 分けて保存する場合、重複活動名リストは空にする（すべて登録対象にする）
       if (sepFlg) {dupActNames = [];}
-      }
-      //マージ処理
-      await mergeUserData(inputActivities, inputRecords, currentActNames, dupActNames);
-      console.log("✅ 匿名データをGoogleアカウントにマージしました");
-          
-      // 初期化のためカスタムイベントを dispatch（main.js がこれを待つ）
-      window.dispatchEvent(new Event("auth-ready"));
-      return true; // インポート時のアラート設定のため
+    }
+    //マージ処理
+    await mergeUserData(inputActivities, inputRecords, currentActNames, dupActNames);
+    console.log("✅ 匿名データをGoogleアカウントにマージしました");
+    
+    // 初期化のためカスタムイベントを dispatch（main.js がこれを待つ）
+    window.dispatchEvent(new Event("auth-ready"));
+    return true; // インポート時のアラート設定のため
 
   } catch (error) {
     console.error("❌ データマージに失敗:", error);
