@@ -7,6 +7,7 @@
 import { mergeCheck } from "./firebase-init.js";
 // Firestore 関連の操作関数を個別に import
 import { getQueryData, addQueryData, deleteQueryData } from './dataMerge.js';
+import { funcLock } from "./functionLock.js";
 
 let currentPageId = "homePage"; // 現在表示されているページID
 let currentActivity = null;     // 現在選択されている活動
@@ -106,7 +107,7 @@ function makeCommonActList(activity, order, isTopTimes = true) {
     currentActivity = activity; 
     currentOrder = order;
     //フラグに応じて上位タイムまたは記録一覧を表示するボタン追加
-    isTopTimes ? showTopTimes() : showActivityRecords();
+    isTopTimes ? showTopTimesBL() : showActivityRecordsBL();
   };
   return element;
 }
@@ -386,14 +387,14 @@ async function disableWakeLock() {
 // タイマー画面から活動毎の記録一覧へ
 // -----------------------------
 function backTodetailPage() {
-  showActivityRecords(); // 活動毎の記録一覧へ
+  showActivityRecordsBL(); // 活動毎の記録一覧へ
 }
 
 // -----------------------------
 // 活動毎の記録一覧へからタイマー画面へ
 // -----------------------------
 function backToTimer() {
-  showTopTimes(); // タイマー画面へ
+  showTopTimesBL(); // タイマー画面へ
 }
 
 // ============================== 削除処理 ==============================
@@ -532,12 +533,20 @@ async function handleImportFile(event) {
   }
 }
 
+// ============================== 連打防止機能設定 ==============================
+const addActivityBL = funcLock(addActivity);
+const startTimerBL = funcLock(startTimer);
+const stopTimerBL = funcLock(stopTimer);
+const saveTimerBL = funcLock(saveTimer);
+const showTopTimesBL = funcLock(showTopTimes);
+const showActivityRecordsBL = funcLock(showActivityRecords);
+
 // ============================== グローバルセット ==============================
 // -----------------------------
 // HTMLから呼び出す関数を明示的に登録
 // -----------------------------
 const globalFunctions = {
-  showPage, addActivity, startTimer, stopTimer, saveTimer, resetTimer, 
-  backTodetailPage, backToTimer, downloadBackup, handleImportFile 
+  showPage, addActivityBL, startTimerBL, stopTimerBL, saveTimerBL, resetTimer, 
+  backTodetailPage, backToTimer, downloadBackup, handleImportFile
 };
 Object.assign(window, globalFunctions);

@@ -11,7 +11,7 @@ import {
   signInAnonymously,
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithCredential ,
+  signInWithCredential,
   linkWithPopup,
   signOut 
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
