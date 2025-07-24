@@ -35,15 +35,19 @@ window.auth = getAuth(app);
 // -----------------------------
 // 匿名ログイン後の認証状態を監視して、main.js に通知する（初回画面表示含む）
 // -----------------------------
-onAuthStateChanged(auth, (user) => {
-console.log("onAuthStateChanged 認証変更キャッチ", user);
-  updateUIForUser(user);
+onAuthStateChanged(auth, async (user) => {
+  console.log("onAuthStateChanged 認証変更キャッチ", user);
+  // 画面表示の更新
+  await updateUIForUser(user);
+
+  // オーバーレイ解除 ※画面オーバーレイ表示は初期表示時とログアウト時、ログイン後解除
+  document.getElementById("overlay").style.display = "none";
 });
 
 // -----------------------------
 // 認証状態に応じて画面表示の更新
 // -----------------------------
-function updateUIForUser(user) {
+async function updateUIForUser(user) {
   if (user) {
     console.log("UID取得:", user.uid);
 
@@ -62,15 +66,14 @@ function updateUIForUser(user) {
     // 未ログイン（ログインボタンだけ表示）
     setAuthBtn(user, false);
 
-    // 匿名でログイン処理を実行
-    signInAnonymously(auth)
-      .then(() => {
-        console.log("✅ 匿名ログイン成功"); // 匿名認証成功後、uid変更でonAuthStateChanged再発火、その後.thenに結果が返るためログ順が変わる
-      })
-      .catch((error) => {
-        console.error("❌ 匿名ログイン失敗:", error);
-        alert("ログインに失敗しました。時間をおいて再度アクセスしてください。");
-      });
+    try {
+      // 匿名でログイン処理を実行
+      await signInAnonymously(auth);
+      console.log("✅ 匿名ログイン成功"); // 匿名認証成功後、uid変更でonAuthStateChanged再発火、その後.thenに結果が返るためログ順が変わる
+    } catch (error) {
+      console.error("❌ 匿名ログイン失敗:", error);
+      alert("ログインに失敗しました。時間をおいて再度アクセスしてください。");
+    }
   }
   showPage("homePage"); // ログインまたはログアウト後はホーム画面に戻る
 }
@@ -116,7 +119,9 @@ export async function loginWithGoogle() {
   // Googleプロバイダオブジェクトのインスタンス作成
   const provider = new GoogleAuthProvider();
 
-  document.getElementById("overlay").style.display = "block"; // ← ポップアップ時に画面オーバーレイ
+   // ポップアップ時に画面オーバーレイ
+  const overlay = document.getElementById("overlay");
+  overlay.style.display = "block";
   try {
     const result = await linkWithPopup(auth.currentUser, provider); // 現UIDをgoogleアカウントUIDに昇格させる
     console.log("✅ 匿名→Googleに昇格成功:", result.user);
@@ -172,7 +177,7 @@ export async function loginWithGoogle() {
       alert("Googleログインに失敗しました。");
     }
   } finally {
-    document.getElementById("overlay").style.display = "none"; // ← オーバーレイ解除
+    overlay.style.display = "none"; // オーバーレイ解除
   }
 }
 
@@ -237,6 +242,7 @@ export async function mergeCheck(inputActivities, inputRecords, mode ) {
 // ログアウト
 // -----------------------------
 export async function logout() {
+  document.getElementById("overlay").style.display = "block"; // 画面オーバーレイ表示
   try {
     await signOut(auth);
     console.log("🚪 ログアウト成功");// ログアウト成功後、uid変更でonAuthStateChanged再発火、その後結果が返るためログ順が変わる
