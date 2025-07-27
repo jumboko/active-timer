@@ -9,6 +9,7 @@
 export const SCHEMAS = {
   activities: ["actName", "recOrder", "userId"], // 活動名・並び順・ユーザーID
   records: ["actName", "time", "date", "userId"], // 活動名・タイム・日付・ユーザーID
+  reserveDeleteUser: ["userId", "date", "status"] // ユーザーID・日付・状態管理フラグ
 };
 
 // -----------------------------

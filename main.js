@@ -4,17 +4,19 @@
 // main.js
 
 // インポート
-import { mergeCheck } from "./firebase-init.js";
-import { getQueryData, addQueryData, deleteQueryData } from './dataMerge.js';
+import { auth } from "./firebaseCore.js";
+import { getQueryData, addQueryData, deleteQueryData } from './dbUtils.js';
+import { formatTime, updateTimerDisplay, resetTimer } from './timer.js';
+import { mergeCheck } from './dataMerge.js';
 import { funcLock } from "./functionLock.js";
-import { getActName, formatTime, updateTimerDisplay, resetTimer } from './timer.js';
+
 
 let currentPageId = "homePage"; // 現在表示されているページID
-let currentActivity = null;     // 現在選択されている活動
+export let currentActivity = null;     // 現在選択されている活動
 let currentOrder = "asc";       // 現在選択されている活動の並び順
 
 // -----------------------------
-// 認証状態に変更があった場合の初期化処理(firebase-init.jsから呼び出し)
+// 認証状態に変更があった場合の初期化処理(authHandler.jsから呼び出し)
 // -----------------------------
 window.addEventListener("auth-ready", async () => {
   await loadActivities(); // 活動一覧の読み込み
@@ -90,8 +92,6 @@ function makeCommonActList(activity, order, isTopTimes = true) {
     // グローバル変数に設定
     currentActivity = activity; 
     currentOrder = order;
-    // timer.jsで記録保存時に活動名を登録するため渡す
-    getActName(activity);
     //フラグに応じて上位タイムまたは記録一覧を表示するボタン追加
     isTopTimes ? showTopTimesBL() : showActivityRecordsBL();
   };

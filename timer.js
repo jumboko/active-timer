@@ -4,23 +4,15 @@
 // timer.js
 
 // インポート
-import { addQueryData } from './dataMerge.js';
+import { auth } from "./firebaseCore.js";
+import { currentActivity } from "./main.js";
+import { addQueryData } from './dbUtils.js';
 import { funcLock } from "./functionLock.js";
 
 let startTime;                  // タイマーの開始時刻
 let elapsedTime = 0;            // 経過時間（ms）
 let timerInterval;              // リアルタイム表示用 setInterval の識別子
 let wakeLock = null;            // Wake Lock スリープ防止用
-
-// main.jsから引き継ぐ変数
-let currentActivity = null;     // 現在選択されている活動
-
-// -----------------------------
-// 呼び出し元（main.js）から currentActivity をセットする
-// -----------------------------
-export function getActName(activityName) {
-  currentActivity = activityName;
-}
 
 // -----------------------------
 // 画面状態が表示または非表示に変更された場合に動作

@@ -107,8 +107,8 @@
   <!-- ポップアップ時の画面制御用 -->
   <div id="overlay"></div>
 
-  <!-- js 最後に書くことでhtmlの読み込みを優先 -->
-  <script type="module" src="./firebase-init.js"></script>
+  <!-- js 最後に書くことでhtmlの読み込みを優先(グローバルボタン読み込み) -->
   <script type="module" src="./main.js"></script>
+  <script type="module" src="./authHandler.js"></script>
 </body>
 </html>

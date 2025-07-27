@@ -3,14 +3,65 @@
 // ================================
 // dataMerge.js
 
-import {
-  collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, where
-} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-import { validateFields } from './validation.js';
+import { auth } from './firebaseCore.js';
+import { getQueryData, addQueryData } from './dbUtils.js';
 
-// ??????????????????????????????????????????????????????????????
-//const db = window.db;
-//const auth = window.auth;
+// -----------------------------
+// インポートまたは匿名→Google昇格時のデータマージ確認処理
+// - 活動名の重複確認・分離対応
+// - 完了後は auth-ready イベントを発火して UI を再初期化
+/** ----------------------------
+ * @param {Array} inputActivities - マージ対象のアクティビティ一覧
+ * @param {Array} inputRecords - マージ対象の記録一覧
+ * @param {string} mode - "google"（昇格）または "import"（インポート）
+ * @returns {boolean} - マージが行われたかどうか（キャンセル時は false）
+ */
+export async function mergeCheck(inputActivities, inputRecords, mode ) {
+  try {
+    // 呼び出し元に応じてメッセージ変更
+    let message = "";
+    if (mode === "google") {
+      message = "匿名ユーザーの活動記録があります。\nGoogleアカウントに引き継ぎますか？\n\nキャンセルすると匿名データは削除されます。";
+    } else if (mode === "import") {
+      message = "現在のアカウントにインポートします。\n\nキャンセルするとインポートは中止されます。";
+    }
+    
+    // メッセージポップアップでユーザがマージをキャンセルした場合
+    const doMerge = confirm(message); 
+    if (!doMerge) {
+      console.log("🛑 ユーザーがマージをキャンセルしました");
+      return false; // インポート時のアラート設定のため
+    }
+
+    // 現行ユーザの活動データ一覧を取得
+    const currentActivities = await getQueryData("activities", { userId: auth.currentUser.uid });
+    // 現行ユーザのアクティビティ名一覧を取得（重複チェック用）
+    const currentActNames = currentActivities.map(act => act.actName);
+
+    // inputユーザと現行ユーザで重複している活動名の一覧を取得
+    let dupActNames = inputActivities.map(act => act.actName).filter(name => currentActNames.includes(name));
+    // 重複がある場合
+    if (dupActNames.length > 0) {
+      const sepFlg = !confirm(
+        "活動名が重複している可能性があります。\n統合して保存しますか？\n\nキャンセルすると活動を分けて保存します。"
+      );
+      // 分けて保存する場合、重複活動名リストは空にする（すべて登録対象にする）
+      if (sepFlg) {dupActNames = [];}
+    }
+    //マージ処理
+    await mergeUserData(inputActivities, inputRecords, currentActNames, dupActNames);
+    console.log("✅ 匿名データをGoogleアカウントにマージしました");
+    
+    // 初期化のためカスタムイベントを dispatch（main.js がこれを待つ）
+    window.dispatchEvent(new Event("auth-ready"));
+    return true; // インポート時のアラート設定のため
+
+  } catch (error) {
+    console.error("❌ データマージに失敗:", error);
+    alert("データマージに失敗しました。");
+    return false; // インポート時のアラート設定のため
+  }
+}
 
 // -----------------------------
 // inputデータを既存アカウントへマージする。活動名重複の扱いは引数で制御。
@@ -95,120 +146,4 @@ export function getUniqueName(checkName, currentNames) {
   } while (currentNames.includes(candidateName));
 
   return candidateName; // 重複しない名前が見つかったら返す
-}
-
-// -----------------------------
-// 匿名ユーザーの削除予約を deleteQueue に登録する。
-// 実際の削除は後日バッチ処理などで行う。
-/** ----------------------------
- * @param {string} anonUid - 匿名ユーザーのUID
- */
-export async function reserveDelUser(anonUid) {
-  try {
-    await addDoc(collection(db, "reserveDeleteUser"), {
-      userId: anonUid,
-      date: new Date().toLocaleString(), // 現在時刻（タイムスタンプ）
-      status: "delete"      // 状態管理フラグ（任意）
-    });
-    console.log(`🕒 匿名UID (${anonUid}) の削除予約を登録しました`);
-  } catch (err) {
-    console.error("❌ 匿名UIDの削除予約登録に失敗:", err);
-    throw err;
-  }
-}
-
-// -----------------------------
-// 匿名ユーザーの活動と記録を削除する。
-/** ----------------------------
- * @param {string} uid - 削除対象の userId（匿名UIDなど）
- */
-export async function deleteAnonUserData (uid) {
-  try {
-    await deleteCollectionByUser("activities", uid);
-    await deleteCollectionByUser("records", uid);
-  } catch (err) {
-    throw err;
-  }
-}
-
-// -----------------------------
-// 特定ユーザーの指定コレクション内の全ドキュメントを削除する。
-/** ----------------------------
- * @param {string} collectionName - 対象コレクション名（例: "activities", "records"）
- * @param {string} uid - 削除対象の userId（匿名UIDなど）
- */
-export async function deleteCollectionByUser(collectionName, uid) {
-  try {
-    // FirestoreからUIDに紐づくデータを取得
-    const docsToDelete = await getQueryData(collectionName, { userId: uid });
-    // 一括削除処理
-    const deleteOps = docsToDelete.map(doc =>deleteQueryData(collectionName, doc.id));
-    // 削除処理完了まで待機
-    await Promise.all(deleteOps);
-    console.log(`🗑 ${collectionName}（${docsToDelete.length}件）を削除しました`);
-  } catch (err) {
-    console.error(`❌ ${uid}の${collectionName} の一括削除に失敗:`, err);
-    throw err;
-  }
-}
-
-// -----------------------------
-// Firestore の任意のコレクションから、指定された複数のフィールド条件（where句）に一致するデータを取得する。
-/** ----------------------------
- * @param {string} collectionName - "activities" や "records" などのコレクション名
- * @param {Object} filters - 取得条件のフィールドと値の組（例: { userId: ..., actName: ... }）
- * @returns {Promise<Array<Object>>} 各ドキュメントの { id, ...データ } を配列で返す
- */
-export async function getQueryData(collectionName, filters = {}) {
-  // データ取得
-  const snap = await getDocs(query(
-    collection(db, collectionName),
-    ...Object.entries(filters).map(([field, value]) => where(field, "==", value))
-  ));
-
-  // snap.idとsnap.data().[項目]を一纏めにし返す(snap.idは削除更新に使用)
-  return snap.docs.map(doc => ({
-    id: doc.id,         // ドキュメントID
-    ...doc.data(),      // activity, time, date, userId など
-  }));
-}
-
-// -----------------------------
-// Firestore の指定コレクションへ、指定されたデータを新規ドキュメントとして登録する。
-//  - validateFields() で必須項目の存在と補完をチェック
-//  - userId や recOrder などもここで自動補完
-//  - 不正なデータはスキップ（null時）
-/** ----------------------------
- * @param {string} collectionName - "activities" や "records" などのコレクション名
- * @param {Object} data - 登録するフィールドのデータ（例: { actName, userId, ... }）
- * @returns {Promise<DocumentReference|undefined>} Firestoreへの追加結果（失敗時は何も返さない）
- */
-export async function addQueryData(collectionName, data = {}) {
-   // 登録データの検証＋補完
-  const validData = validateFields(collectionName, data);
-  if (!validData) {
-    console.warn(`⛔ 無効なデータなので登録スキップ:`, data);
-    return; // 無効データの場合は処理をスキップ
-  }
-  // Firestoreへ登録
-  return await addDoc(collection(db, collectionName), validData);
-}
-
-// -----------------------------
-// Firestore の指定コレクションからドキュメントIDで1件削除する
-/** ----------------------------
- * @param {string} collectionName - "activities" や "records" などのコレクション名
- * @param {string} docId - 削除対象のドキュメントID
- * @returns {Promise<void>} 削除処理の Promise を返す（await 可能に）
- */
-export async function deleteQueryData(collectionName, docId) {
-  try {
-    // 削除処理（非同期）
-    const result = await deleteDoc(doc(db, collectionName, docId));
-    console.log(`🗑 ${collectionName} のドキュメント（ID: ${docId}）を削除しました`);
-    return result;
-  } catch (err) {
-    console.error(`❌ ${collectionName} の削除に失敗:`, err);
-    throw err; // 上位でキャッチのため
-  }
 }
