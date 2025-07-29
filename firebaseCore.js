@@ -18,11 +18,8 @@ const firebaseConfig = {
   appId: "1:68281906785:web:4508221d36146eb9475c20"
 };
 
-// Firebase 初期化
+// Firebase初期化、オブジェクト作成
 const app = initializeApp(firebaseConfig);
-
 // DB・認証を初期化してエクスポート
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-export { db, auth };
+export const db = getFirestore(app);
+export const auth = getAuth(app);

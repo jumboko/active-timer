@@ -271,7 +271,7 @@ input[type="text"], select {
 }
 
 /* 上位記録のリスト */
-#topTimes {
+#topTimesList {
   margin: 0em;                 /* 高さ統一のため外側の余白を削除 */
 }
 
@@ -327,8 +327,8 @@ li {
 /* ----------------------------
   削除ボタンの整列用：横並び＆縦中央揃え
 ----------------------------- */
-#allActivityList li,
-#activityRecordList li {
+#actHistoryList li,
+#recordList li {
   display: flex;          /* 横に並べる(配置自由化) */
   align-items: center;    /* 垂直方向に中央揃え */
 }
@@ -412,7 +412,7 @@ li {
   }
   /* 昇順降順プルダウン */
   #recordOrder {
-    height: 2.6em; /* テキストボックスと高さ揃える ??????????????????????????聞くか分からん、safariでは形式が異なる */
+  /*  height: 2.6em; /* テキストボックスと高さ揃える ??????????????????????????聞くか分からん、safariでは形式が異なる */
   }
 
   /* タイマー画面を縦表示に */

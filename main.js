@@ -45,10 +45,10 @@ function showPage(id) {
 // -----------------------------
 async function loadActivities() {
   // 2種の活動名リスト要素にアクセス、初期化
-  const list = document.getElementById('activityList');
-  const allList = document.getElementById('allActivityList');
-  list.innerHTML = '';
-  allList.innerHTML = '';
+  const actSelList = document.getElementById('actSelectList');
+  const actHisList = document.getElementById('actHistoryList');
+  actSelList.innerHTML = '';
+  actHisList.innerHTML = '';
 
   // ユーザの活動名データ一覧を取得
   const snapshot = await getQueryData("activities", {userId: auth.currentUser.uid});
@@ -58,10 +58,10 @@ async function loadActivities() {
     const activity = docSnap.actName; // 活動名データから活動名取得
     const order = docSnap.recOrder || "asc";// 活動名データから並び順取得 ※デフォルトは「昇順」
 
-    // 活動選択画面用（activityList）のエレメントを構築
-    list.appendChild(makeCommonActList(activity, order, true));
+    // 活動選択画面用（actSelectList）のエレメントを構築
+    actSelList.appendChild(makeCommonActList(activity, order, true));
 
-    // 活動記録選択画面用（allActivityList）のエレメントを構築
+    // 活動記録選択画面用（actHistoryList）のエレメントを構築
     const li = document.createElement('li');
     li.appendChild(makeCommonActList(activity, order, false));
 
@@ -74,7 +74,7 @@ async function loadActivities() {
     };
     li.appendChild(delBtn);
 
-    allList.appendChild(li);
+    actHisList.appendChild(li);
   });
 }
 
@@ -93,7 +93,7 @@ function makeCommonActList(activity, order, isTopTimes = true) {
     currentActivity = activity; 
     currentOrder = order;
     //フラグに応じて上位タイムまたは記録一覧を表示するボタン追加
-    isTopTimes ? showTopTimesBL() : showActivityRecordsBL();
+    isTopTimes ? showTimerPageBL() : showRecordListPageBL();
   };
   return element;
 }
@@ -101,9 +101,9 @@ function makeCommonActList(activity, order, isTopTimes = true) {
 // -----------------------------
 // 対象の活動の上位タイムを表示する
 // -----------------------------
-async function showTopTimes() {
+async function showTimerPage() {
   // 上位3タイムリスト要素にアクセス、初期化
-  const list = document.getElementById('topTimes');
+  const list = document.getElementById('topTimesList');
   list.innerHTML = '';
 
   // 対象活動の記録取得
@@ -125,9 +125,9 @@ async function showTopTimes() {
 // -----------------------------
 // 対象の活動の記録一覧を表示する（登録直後の記録をハイライト）
 // -----------------------------
-async function showActivityRecords(highlightLast = false) {
+async function showRecordListPage(highlightLast = false) {
   // 対象活動の全記録リスト要素にアクセス、初期化
-  const list = document.getElementById('activityRecordList');
+  const list = document.getElementById('recordList');
   list.innerHTML = '';
 
   // 対象活動の記録取得
@@ -167,8 +167,8 @@ async function showActivityRecords(highlightLast = false) {
 
     list.appendChild(li);
   });
-  document.getElementById('detailTitle').innerHTML = `${currentActivity}の<ruby>記録<rt>きろく</rt></ruby>`; // 活動名を表示
-  showPage('detailPage');
+  document.getElementById('recordListTitle').innerHTML = `${currentActivity}の<ruby>記録<rt>きろく</rt></ruby>`; // 活動名を表示
+  showPage('recordListPage');
 }
 
 // -----------------------------
@@ -225,15 +225,15 @@ async function addActivity() {
 // -----------------------------
 // タイマー画面から活動毎の記録一覧へ
 // -----------------------------
-function backTodetailPage() {
-  showActivityRecordsBL(); // 活動毎の記録一覧へ
+function backToRecordListPage() {
+  showRecordListPageBL(); // 活動毎の記録一覧へ
 }
 
 // -----------------------------
 // 活動毎の記録一覧へからタイマー画面へ
 // -----------------------------
-function backToTimer() {
-  showTopTimesBL(); // タイマー画面へ
+function backToTimerPage() {
+  showTimerPageBL(); // タイマー画面へ
 }
 
 // ============================== 削除処理 ==============================
@@ -280,7 +280,7 @@ async function deleteRecord(activity, target) {
   await deleteQueryData("records", targetDoc.id); // 対象の記録をDB削除
 
   // DOMから記録一覧リストを取得し削除する行を特定
-  const list = document.getElementById('activityRecordList');
+  const list = document.getElementById('recordList');
   const targetLi = Array.from(list.children).find(li =>
     li.dataset.date === target.date && parseFloat(li.dataset.time) === target.time
   );
@@ -374,15 +374,15 @@ async function handleImportFile(event) {
 
 // ============================== 連打防止機能設定 ==============================
 const addActivityBL = funcLock(addActivity);
-const showTopTimesBL = funcLock(showTopTimes);
-const showActivityRecordsBL = funcLock(showActivityRecords);
+const showTimerPageBL = funcLock(showTimerPage);
+const showRecordListPageBL = funcLock(showRecordListPage);
 
 // ============================== グローバルセット ==============================
 // -----------------------------
 // HTMLから呼び出す関数を明示的に登録
 // -----------------------------
 const globalFunctions = {
-  showPage, addActivityBL, backTodetailPage, backToTimer, downloadBackup, handleImportFile, 
-  showActivityRecords //timer.jsから呼ぶため
+  showPage, addActivityBL, backToRecordListPage, backToTimerPage, downloadBackup, handleImportFile, 
+  showRecordListPage //timer.jsから呼ぶため
 };
 Object.assign(window, globalFunctions);

@@ -100,7 +100,7 @@ async function saveTimer() {
   });
 
   resetTimer(); // タイマーリセット
-  showActivityRecords(true); // 保存後に記録表示ページへ(連打制御不要)
+  showRecordListPage(true); // 保存後に記録表示ページへ(連打制御不要)
 }
 
 // -----------------------------

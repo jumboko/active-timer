@@ -12,8 +12,11 @@ import {
   signOut 
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
 import { auth } from './firebaseCore.js';
-import { mergeCheck } from './dataMerge.js';
 import { getQueryData, addQueryData } from './dbUtils.js';
+import { mergeCheck } from './dataMerge.js';
+
+// Googleプロバイダオブジェクトのインスタンス作成
+const provider = new GoogleAuthProvider();
 
 // -----------------------------
 // 匿名ログイン後の認証状態を監視して、main.js に通知する（初回画面表示含む）
@@ -22,7 +25,6 @@ onAuthStateChanged(auth, async (user) => {
   console.log("onAuthStateChanged 認証変更キャッチ", user);
   // 画面表示の更新
   await updateUIForUser(user);
-
   // オーバーレイ解除 ※画面オーバーレイ表示は初期表示時とログアウト時、ログイン後解除
   document.getElementById("overlay").style.display = "none";
 });
@@ -99,8 +101,6 @@ export async function loginWithGoogle() {
     alert("ユーザー情報の取得に失敗しました。もう一度お試しください。");
     return;
   }
-  // Googleプロバイダオブジェクトのインスタンス作成
-  const provider = new GoogleAuthProvider();
 
    // ポップアップ時に画面オーバーレイ
   const overlay = document.getElementById("overlay");
@@ -119,7 +119,7 @@ export async function loginWithGoogle() {
       const credential = GoogleAuthProvider.credentialFromError(error);
       if (credential) {
         try {
-          let wasAnonDataFlg = false; // 匿名ユーザでデータ有の場合はtureになる
+          let wasAnonDataFlg = false; // 匿名ユーザでデータ有の場合はtureになるflg
           let anonActivities = [], anonRecords = [];
           // 匿名アカウントの場合は、googleに再ログイン後データマージのためデータ取得  ※匿名ログイン以外はアカウント切り替えでマージは不要
           if (auth.currentUser && auth.currentUser.isAnonymous) {

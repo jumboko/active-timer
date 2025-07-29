@@ -30,10 +30,10 @@
 
   <!-- トップ画面 -->
   <div id="homePage" class="page active">
-    <button class="btn-main" onclick="showPage('historyPage');">
+    <button class="btn-main" onclick="showPage('actHistoryPage');">
       <ruby>記録確認<rt>きろくかくにん</rt></ruby>
     </button>
-    <button class="btn-main" onclick="showPage('recordPage')">
+    <button class="btn-main" onclick="showPage('actSelectPage')">
       <ruby>活動<rt>かつどう</rt></ruby>を<ruby>記録<rt>きろく</rt></ruby>
     </button>
     <!-- バックアップ・インポート・ファイル選択エリア -->
@@ -45,7 +45,7 @@
   </div>
 
   <!-- 活動選択画面 -->
-  <div id="recordPage" class="page">
+  <div id="actSelectPage" class="page">
     <h2><ruby>活動<rt>かつどう</rt></ruby>を<ruby>選択<rt>せんたく</rt></ruby></h2>
     <input type="text" id="newActivity" placeholder="新しい活動名" />
     <label id="recordOrderLabel" for="recordOrder">並び順 ：</label>
@@ -54,7 +54,7 @@
         <option value="desc">最長記録順</option>
       </select>
     <button class="btn-add" onclick="addActivityBL()"><ruby>追加<rt>ついか</rt></ruby></button>
-    <ul id="activityList"></ul>
+    <ul id="actSelectList"></ul>
     <button class="btn-nav" onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
   </div>
 
@@ -80,28 +80,28 @@
       <!-- 右側：上位記録 -->
       <div class="rankColumn">
         <h3><ruby>上位記録<rt>じょういきろく</rt></ruby>（トップ3）</h3>
-        <ul id="topTimes"></ul>
+        <ul id="topTimesList"></ul>
         <div id="timerBackControls">
-          <button class="btn-nav" onclick="showPage('recordPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
-          <button class="btn-nav" onclick="backTodetailPage()"><ruby>記録一覧<rt>きろくいちらん</rt></ruby>へ</button>
+          <button class="btn-nav" onclick="showPage('actSelectPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
+          <button class="btn-nav" onclick="backToRecordListPage()"><ruby>記録一覧<rt>きろくいちらん</rt></ruby>へ</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- 活動記録選択画面 -->
-  <div id="historyPage" class="page">
+  <div id="actHistoryPage" class="page">
     <h2><ruby>活動記録<rt>かつどうきろく</rt></ruby>の<ruby>選択<rt>せんたく</rt></ruby></h2>
-    <ul id="allActivityList"></ul>
+    <ul id="actHistoryList"></ul>
     <button class="btn-nav" onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
   </div>
 
   <!-- 活動毎の記録一覧 -->
-  <div id="detailPage" class="page">
-    <h2 id="detailTitle">活動名の記録</h2>
-    <ul id="activityRecordList"></ul>
-    <button class="btn-nav" onclick="showPage('historyPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
-    <button class="btn-nav" onclick="backToTimer()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
+  <div id="recordListPage" class="page">
+    <h2 id="recordListTitle">活動名の記録</h2>
+    <ul id="recordList"></ul>
+    <button class="btn-nav" onclick="showPage('actHistoryPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
+    <button class="btn-nav" onclick="backToTimerPage()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
   </div>
 
   <!-- ポップアップ時の画面制御用 -->
