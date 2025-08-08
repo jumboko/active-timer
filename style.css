@@ -374,6 +374,47 @@ li {
 }
 
 /* ----------------------------
+  モーダル画面
+----------------------------- */
+.modal {
+  display: none;       /* 画面非表示 */
+  position: fixed;     /* 位置を固定 */
+  z-index: 99999;      /* 前面に表示 */
+  left: 0;             /* 全画面配置 */
+  top: 0;              /* 全画面配置 */
+  width: 100%;         /* 全画面配置 */
+  height: 100%;        /* 全画面配置 */
+  overflow: auto;      /* 画面が小さいときにスクロール */
+  background-color: rgba(0,0,0,0.4); /* 半透明背景 */
+}
+
+.modalContent {
+  background-color: #fff; /* 背景色 */
+  margin: 10% auto;         /* 外側の余白 周りに10%の余白を作り中央に配置 */
+  padding: 20px;            /* 内側の余白 */
+  border: 1px solid #888; /* 枠線の書式設定(大きさ、タイプ、色)*/
+  border-radius: 10px;      /* 角を丸くする */
+  width: 100%;              /* 横幅いっぱいに表示 */
+  max-width: 500px;         /* 最大横幅を制限 */
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);  /* ほんのり影で立体感 */
+  position: relative;       /* 右上閉じるボタンの基準位置を指定 */
+}
+
+.close {
+  position: absolute; /* 基準値から自由に配置(modalContentに基準設定) */
+  top: 10px;          /* 配置 上から10px */
+  right: 15px;        /* 配置 右から15px */
+  font-size: 1.5em;   /* 文字サイズ */
+  font-weight: bold;  /* 太文字 */
+  color: #aaa;      /* 文字色 */
+  cursor: pointer;    /* カーソルをポインタに */
+}
+
+.close:hover {
+  color: #000;     /* ホバー時の文字色 */
+}
+
+/* ----------------------------
   レスポンシブ対応：スマホ時の調整
 ----------------------------- */
 @media (max-width: 600px) {

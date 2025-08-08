@@ -107,6 +107,16 @@
   <!-- ポップアップ時の画面制御用 -->
   <div id="overlay"></div>
 
+  <!-- 共通モーダル画面 -->
+  <div id="modal" class="modal">
+    <div class="modalContent">
+      <span id="modalClose" class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle"></h2>
+      <div id="modalBody"></div>
+      <div id="modalFooter"></div><!-- 必要に応じてボタン追加 -->
+    </div>
+  </div>
+
   <!-- js 最後に書くことでhtmlの読み込みを優先(グローバルボタン読み込み) -->
   <script type="module" src="./main.js"></script>
   <script type="module" src="./authHandler.js"></script>
