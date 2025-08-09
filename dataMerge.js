@@ -4,7 +4,8 @@
 // dataMerge.js
 
 import { auth } from './firebaseCore.js';
-import { getQueryData, addQueryData } from './dbUtils.js';
+import { getQueryData, addQueryData, updateQueryData } from './dbUtils.js';
+import { showMergeModal } from './modalHandler.js';
 
 // -----------------------------
 // インポートまたは匿名→Google昇格時のデータマージ確認処理
@@ -65,18 +66,25 @@ export async function mergeCheck(inputActivities, inputRecords, mode ) {
 
 // -----------------------------
 // inputデータを既存アカウントへマージする。活動名重複の扱いは引数で制御。
-// 重複対象無　　　　　　　　　　　全てinput
-// 重複対象有 &　マージせず分ける　全てinput
-// 重複対象有 &　マージする　　　　一部input(重複活動名はスルー)
-// -----------------------------
+// - 重複対象無　　　　　　　　　　　全てinput
+// - 重複対象有 &　マージせず分ける　全てinput(重複活動名も別名化して登録)
+// - 重複対象有 &　マージする　　　　一部input(重複活動名はスルー)
+/** ----------------------------
+ * @param {Array<Object>} inputActivities - インポート元の活動データ配列（{ actName, recOrder, ... }）
+ * @param {Array<Object>} inputRecords    - インポート元の記録データ配列（{ actName, date, time, ... }）
+ * @param {Array<string>} currentActNames - 既存アカウントに登録済みの全活動名一覧
+ * @param {Array<string>} dupActNames     - 活動名の重複があった場合にマージ対象外とする活動名一覧
+ */
 export async function mergeUserData(inputActivities, inputRecords, currentActNames, dupActNames) {
-  const currentUid = auth.currentUser.uid; // 再ログイン後のUIDを使用
+  // 再ログイン後のUIDを使用し既存レコードを取得（重複チェック用）
+  const currentUid = auth.currentUser.uid;
+  const currentRecords = await getQueryData("records", { userId: currentUid });
+
   // 並列でまとめて登録用の変数
   const actAdds = []; 
   const recAdds = [];
-
-    // 既存レコードを取得（重複チェック用）
-  const currentRecords = await getQueryData("records", { userId: currentUid });
+  // 記録をマージする際にメモのみ差分があり両方に値がある場合のレコード情報取得変数
+  const mergeWarnings = [];
 
   // inputアクティビティが存在する場合、1件ずつ処理
   for (const inputAct of inputActivities) {
@@ -97,21 +105,23 @@ export async function mergeUserData(inputActivities, inputRecords, currentActNam
 
       // 名前が重複しないようにリストに追加
       currentActNames.push(setActName);
+    } else {
+      console.log(`⏭ 活動名重複スキップ(マージ対応): ${setActName}`); // 処理の遅延回避で削除検討？？？？？？？？？？？？
     }
 
     // 取得中のinputアクティビティに対応する記録一覧を取得
     const inputActRecs = inputRecords.filter(r => r.actName=== inputAct.actName);
     // 記録一覧を1件ずつ処理(活動名重複を分けない場合もそのまま登録)
     for (const inputRec of inputActRecs) {
-      // 既存レコード一覧に完全重複のinput記録が1件でも存在するかを確認
-      const dupFlg = currentRecords.some(cr =>
+      // 既存レコード一覧から完全一致する記録（重複）を検索
+      const dupRec = currentRecords.find(cr =>
         cr.actName === setActName &&
         cr.date === inputRec.date &&
         cr.time === inputRec.time
       );
 
       // 重複がない場合
-      if (!dupFlg) {
+      if (!dupRec) {
         // 記録を追加（あとでまとめて Promise.all）
         recAdds.push(addQueryData("records", {
           ...inputRec,         // 取得情報をそのまま展開
@@ -119,19 +129,58 @@ export async function mergeUserData(inputActivities, inputRecords, currentActNam
           userId: currentUid   // 上書き
         }));
 
+      // 重複ありの場合
       } else {
-        console.log(`⏭ 重複スキップ: ${setActName} (${inputRec.date}, ${inputRec.time}s)`); // 処理の遅延回避で削除検討？？？？？？？？？？？？
+         // メモ内容を取得　※falseな値(null、undefined)の場合、空文字を設定
+        const inputMemo = inputRec.memo || "";
+        const currentMemo = dupRec.memo || "";
+
+        let mergedMemo = currentMemo;
+
+        // インプットメモに値がある、かつメモの内容が異なる場合　※インプットにメモがない、またはメモに差異がない場合はスキップ
+        if (inputMemo && inputMemo !== currentMemo) {
+          // 既存メモが空の場合
+          if (!currentMemo) {
+            mergedMemo = inputMemo; // インプットメモがupdate対象
+
+          // 両方に値はあるが、既存メモに以前にマージした痕跡がある場合
+          } else if (currentMemo.includes('\nーーーーーここからマージメモーーーーー\n')) {
+            console.log(`⚠️ 既にメモにマージの痕跡があるためスキップ: ${inputMemo}`);
+            continue; // 次のレコードへ
+
+          // 両方に値がある場合
+          } else  {
+            mergedMemo = `${currentMemo}\nーーーーーここからマージメモーーーーー\n${inputMemo}`; // メモをマージ
+
+            // マージしたことをユーザに伝える情報取得
+            mergeWarnings.push({
+              actName: setActName,
+              date: inputRec.date,
+              time: inputRec.time
+            });
+          }
+          // 記録を更新（あとでまとめて Promise.all）
+          recAdds.push(updateQueryData("records", dupRec.id, { memo: mergedMemo }));
+          console.log(`メモ内容をマージ更新: ${setActName} (${inputRec.date}, ${inputRec.time}s)`);
+        } else {
+          console.log(`⏭ 記録重複スキップ: ${setActName} (${inputRec.date}, ${inputRec.time}s)`); // 処理の遅延回避で削除検討？？？？？？？？？？？？
+        }
       }
     }
   }
   // 並列でまとめて登録（activities + records）
   await Promise.all([...actAdds, ...recAdds]);
+
+  // メモマージ警告があれば通知
+  if (mergeWarnings.length > 0) {
+    showMergeModal(mergeWarnings);
+  }
 }
 
 // -----------------------------
 // 既存名称をもとに、重複しない名称を生成する。
 // -----------------------------
-export function getUniqueName(checkName, currentNames) {
+function getUniqueName(checkName, currentNames) {
   // そのまま使えるかチェック
   if (!currentNames.includes(checkName)) {
     return checkName;

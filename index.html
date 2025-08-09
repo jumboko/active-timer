@@ -104,6 +104,28 @@
     <button class="btn-nav" onclick="backToTimerPage()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
   </div>
 
+  <!-- 記録詳細画面 -->
+  <div id="recordDetailPage" class="page">
+    <h2 id="recordDetailTitle">活動名の記録詳細</h2>
+    <p><strong><ruby>日付<rt>ひづけ</rt></ruby>：</strong><span id="detailDate"></span></p>
+    <div class="rank-time-row">
+      <p><strong><ruby>順位<rt>じゅんい</rt></ruby>：</strong><span id="detailRank"></span></p>
+      <p><strong><ruby>記録<rt>きろく</rt></ruby>：</strong><span id="detailTime"></span></p>
+    </div>
+    <label for="detailMemo"><strong>メモ（最大100文字）：</strong></label>
+    <textarea id="detailMemo" rows="5" maxlength="100" readonly></textarea>
+    <div id="memoControls">
+      <div id="memoLeftButton">
+        <button class="btn-nav" onclick="showPage('recordListPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
+      </div>
+      <div id="memoRightButton">
+        <button class="btn-sub" onclick="editMemo()" id = "editMemoBtn">メモ<ruby>編集<rt>へんしゅう</rt></ruby></button>
+        <button class="btn-sub" onclick="cancelEditedMemo()" id = "cancelMemoBtn" style="display: none">キャンセル</button>
+        <button class="btn-sub" onclick="saveEditedMemoBL()" id = "saveMemoBtn" style="display: none">メモ<ruby>保存<rt>ほぞん</rt></ruby></button>
+      </div>
+    </div>
+  </div>
+
   <!-- ポップアップ時の画面制御用 -->
   <div id="overlay"></div>
 

@@ -33,6 +33,31 @@ export function closeModal() {
   document.getElementById("modal").style.display = "none"; // モーダル画面非表示
 }
 
+// ============================== 各モーダルの設定 ==============================
+// -----------------------------
+// メモマージ通知モーダル
+// -----------------------------
+export function showMergeModal(warnings) {
+  //bodyを作成(差分メモ一覧を表示し修正を促す)
+  const warningHtml = `
+    <p>以下の記録でメモに差分がありマージしました。</p>
+    <ul>
+      ${warnings.map(w => {
+        const t = formatTime(w.time * 1000); // w.time * 1000 = 秒→ms→フォーマット
+        return `<li>活動名：${w.actName}<br>記録名：${t.text}<small>${t.small}</small> (${w.date})</li>`;
+      }).join("")}
+    </ul>
+    <p>※ 手動でメモを修正し、「ここからマージメモ」の記載を削除してください。</p>
+    <p>※ 次回のインポート時に未修正の場合、メモのマージは行われません。</p>
+  `; 
+
+  openModal({
+    title: "⚠️ メモマージ通知",
+    body: warningHtml ,
+    buttons: [{ text: "OK" }]
+  });
+}
+
 // -----------------------------
 // HTMLから使うためにグローバル登録
 // -----------------------------

@@ -5,15 +5,16 @@
 
 // インポート
 import { auth } from "./firebaseCore.js";
-import { getQueryData, addQueryData, deleteQueryData } from './dbUtils.js';
+import { getQueryData, addQueryData, updateQueryData, deleteQueryData } from './dbUtils.js';
 import { formatTime, updateTimerDisplay, resetTimer } from './timer.js';
 import { mergeCheck } from './dataMerge.js';
 import { funcLock } from "./functionLock.js";
 
 
-let currentPageId = "homePage"; // 現在表示されているページID
-export let currentActivity = null;     // 現在選択されている活動
-let currentOrder = "asc";       // 現在選択されている活動の並び順
+let currentPageId = "homePage";    // 現在表示されているページID
+export let currentActivity = null; // 現在選択されている活動
+let currentOrder = "asc";          // 現在選択されている活動の並び順
+let currentRecord = null;          // 現在選択されている記録
 
 // -----------------------------
 // 認証状態に変更があった場合の初期化処理(authHandler.jsから呼び出し)
@@ -145,7 +146,7 @@ async function showRecordListPage(highlightLast = false) {
   // 記録一覧リストをループ(第一引数：記録データ、第二引数:インデックス番号)
   records.forEach((record, index) => {
     // 記録一覧リストのエレメントを構築
-    const li = makeCommonRecList(record, index);
+    const li = makeCommonRecList(record, index, true);
 
     // 削除や照合用に日付・タイムを埋め込む
     li.dataset.date = record.date;
@@ -174,7 +175,7 @@ async function showRecordListPage(highlightLast = false) {
 // -----------------------------
 // 共通の記録エレメント作成
 // -----------------------------
-function makeCommonRecList(record, index) {
+function makeCommonRecList(record, index,  enableClick = false) {
   // エレメントを構築
   const li = document.createElement('li');
 
@@ -190,9 +191,101 @@ function makeCommonRecList(record, index) {
   const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
   const shortDate = record.date.replace(/^20/, ''); // 2025-01-01 → 25-01-01
   recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${shortDate}）`; // 表示名
+  // 活動毎の記録一覧に遷移する場合、クリックで記録詳細画面に遷移
+  if (enableClick) {
+    recordSpan.onclick = () => {
+      showRecordDetailPage(record, index); // クリックで記録詳細へ
+    };
+  }
   li.appendChild(recordSpan);
 
   return li;
+}
+
+// ============================== 記録詳細画面 ==============================
+// -----------------------------
+// 対象の記録詳細を表示する
+// -----------------------------
+function showRecordDetailPage(record, rank) {
+  currentRecord = record; // 対象記録をグローバル変数に設定
+  const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
+
+  // 各種フィールドに値を設定
+  document.getElementById("detailRank").textContent = `${rank + 1}位`; //rank=indexのため0スタート
+  document.getElementById("detailTime").innerHTML = `${formatted.text}<small>${formatted.small}</small>`;
+  document.getElementById("detailDate").textContent = record.date;
+  document.getElementById("detailMemo").value = record.memo || '';
+
+  // 編集モードを初期状態に戻す（非編集状態）
+  setMemoEditMode(false);
+
+  document.getElementById("recordDetailTitle").innerHTML = `${currentActivity}の<ruby>記録詳細<rt>きろくしょうさい</rt></ruby>`;
+  showPage("recordDetailPage");
+}
+
+// -----------------------------
+// 記録詳細のメモ編集モードに変更(htmlから呼ぶため関数化)
+// -----------------------------
+function editMemo() {
+  setMemoEditMode(true); // 編集モード
+}
+
+// -----------------------------
+// 記録詳細のメモ編集モードを解除
+// -----------------------------
+function cancelEditedMemo() {
+  setMemoEditMode(false); // 編集モード解除
+  document.getElementById("detailMemo").value = currentRecord.memo || ""; // メモを初期化
+}
+
+// -----------------------------
+// 記録詳細のメモ編集モード制御
+// -----------------------------
+function setMemoEditMode(isEditing) {
+  document.getElementById("detailMemo").readOnly = !isEditing; // 編集モードの場合readOnlyをfalseへ
+  document.getElementById("editMemoBtn").style.display = isEditing ? "none" : "block";
+  document.getElementById("saveMemoBtn").style.display = isEditing ? "block" : "none";
+  document.getElementById("cancelMemoBtn").style.display = isEditing ? "block" : "none";
+}
+
+// -----------------------------
+// 記録詳細のメモを更新する
+// -----------------------------
+async function saveEditedMemo() {
+  // テキストボックスへの入力内容を取得
+  const newMemo = document.getElementById("detailMemo").value.trim();
+
+  // 文字数制限を超えた場合
+  if (newMemo.length > 100) {
+    alert("メモは最大100文字までです");
+    return;
+  }
+  // メモに変更がなければ何もしない
+  if ((currentRecord.memo || '') === newMemo) {
+    alert("変更がありません");
+    return;
+  }
+
+  // 現在のレコードと同一の Firestore ドキュメントを検索
+  const recSnaps = await getQueryData("records", {
+    userId: auth.currentUser.uid,
+    actName: currentActivity,
+    time: currentRecord.time,
+    date: currentRecord.date
+  });
+
+  // 上記条件に一致するのは1件のみ
+  if (!recSnaps[0]) {
+    alert("対象の記録が見つかりませんでした");
+    return;
+  }
+
+  // Firestoreのmemoを更新（他のフィールドは変更しない）
+  await updateQueryData("records", recSnaps[0].id, { memo: newMemo });
+
+  setMemoEditMode(false); // 編集モード解除
+  currentRecord.memo = newMemo; // UI上も更新
+  alert("メモを保存しました");
 }
 
 // ============================== 活動管理 ==============================
@@ -376,6 +469,7 @@ async function handleImportFile(event) {
 const addActivityBL = funcLock(addActivity);
 const showTimerPageBL = funcLock(showTimerPage);
 const showRecordListPageBL = funcLock(showRecordListPage);
+const saveEditedMemoBL = funcLock(saveEditedMemo);
 
 // ============================== グローバルセット ==============================
 // -----------------------------
@@ -383,6 +477,7 @@ const showRecordListPageBL = funcLock(showRecordListPage);
 // -----------------------------
 const globalFunctions = {
   showPage, addActivityBL, backToRecordListPage, backToTimerPage, downloadBackup, handleImportFile, 
+  editMemo, cancelEditedMemo, saveEditedMemoBL, 
   showRecordListPage //timer.jsから呼ぶため
 };
 Object.assign(window, globalFunctions);

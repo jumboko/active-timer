@@ -8,7 +8,7 @@
 // -----------------------------
 export const SCHEMAS = {
   activities: ["actName", "recOrder", "userId"], // 活動名・並び順・ユーザーID
-  records: ["actName", "time", "date", "userId"], // 活動名・タイム・日付・ユーザーID
+  records: ["actName", "time", "date", "userId", "memo"], // 活動名・タイム・日付・ユーザーID・メモ
   reserveDeleteUser: ["userId", "date", "status"] // ユーザーID・日付・状態管理フラグ
 };
 
@@ -49,6 +49,10 @@ export function validateFields(collectionName, rawData = {}) {
       // userIdに問題があった場合
       } else if (key === "userId") {
         cleanData[key] = auth.currentUser.uid; // ユーザーIDを補完
+
+      // memoに問題があった場合
+      } else if (key === "memo") {
+         cleanData[key] = ""; // 空文字で補完
 
       } else {
         // 補完不可能な項目が不足 → 無効データとして null を返す

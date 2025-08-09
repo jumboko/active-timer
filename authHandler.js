@@ -127,7 +127,7 @@ export async function loginWithGoogle() {
             anonActivities = await getQueryData("activities", { userId: anonUid });
             anonRecords = await getQueryData("records", { userId: anonUid });
 
-            // 匿名データが存在するか確認
+            // 匿名データが存在するか確認????????????????????????????????????????????????activityがないならrecordもないロジックでは？
             wasAnonDataFlg = anonActivities.length > 0 || anonRecords.length > 0 ;
 
             // 匿名ユーザ、データは削除予約する  ??????????????????????????????????????google再ログインに失敗した場合は削除予約取り消しが必要
@@ -139,7 +139,6 @@ export async function loginWithGoogle() {
           console.log("✅ Google再ログイン成功:", result.user);// 再ログイン成功後、uid変更でonAuthStateChanged再発火、その後結果が返るためログ順が変わる
 
           // マージで失敗した場合、ログイン済みだったらどうする？ログアウトしても匿名データは戻らないよね。？？？？？？？？？？？？？？？？
-          // エクスポート機能でリスクヘッジ
 
 
 		      // 🔽 匿名ユーザーでデータ保持の場合、マージの意思確認を行いマージ処理を実施

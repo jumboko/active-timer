@@ -5,7 +5,7 @@
 
 import { db } from "./firebaseCore.js";
 import {
-  collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, where
+  collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, orderBy, where
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { validateFields } from './validation.js';
 
@@ -49,6 +49,23 @@ export async function addQueryData(collectionName, data = {}) {
   }
   // Firestoreへ登録
   return await addDoc(collection(db, collectionName), validData);
+}
+
+// -----------------------------
+// Firestore の指定コレクションへ、ドキュメントIDで指定された複数フィールドを更新する
+//  - merge: true = 既存の値を保持しつつ、指定したフィールドだけを更新
+/** ----------------------------
+ * @param {string} collectionName - "activities" や "records" などのコレクション名
+ * @param {string} docId - 更新対象のドキュメントID
+ * @param {Object} data - 登録するフィールドのデータ（例: { actName, userId, ... }）
+ * @returns {Promise<void>} Firestoreへの更新完了（失敗時は例外スロー）
+ */
+export async function updateQueryData(collectionName, docId, data) {
+  const docRef = doc(db, collectionName, docId);
+  const result = await setDoc(docRef, data, { merge: true });   // 既存データにマージ（上書き）
+
+  console.log(`${collectionName} のドキュメント（ID: ${docId}）を更新しました`);
+  return result;
 }
 
 // -----------------------------

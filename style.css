@@ -159,7 +159,7 @@ button {
   border-radius: 12px;         /* 角を丸くする */
   background: #f9c74f;       /* 背景色 */
   color: #333;               /* 文字色 */
-  cursor: pointer;             /* マウスポインタ変化 */
+  cursor: pointer;             /* カーソルをポインタに */
   transition: background 0.3s; /* マウスホバー時の動作反映速度指定 */
 }
 
@@ -175,7 +175,7 @@ input[type="text"], select {
   font-size: 1.1em;           /* 文字サイズ */
   margin: 0.5em 0.2em;        /* 外側の余白 */
   padding: 0.5em;             /* 内側の余白 */
-  border: 1px solid #ccc;   /* 枠線の書式設定(太さ、タイプ、色)*/
+  border: 1px solid #ccc;   /* 枠線の書式設定(大きさ、タイプ、色)*/
   border-radius: 10px;        /* 角を丸くする */
   background-color: #fff;   /* 背景色 */
   box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
@@ -250,34 +250,34 @@ input[type="text"], select {
 
 /* 左側グループ（スタート／ストップ／再開） → 全く同じ位置で切り替え表示される */
 .control-left {
-  display: flex;                 /* ボタンを横並び */
-  align-items: center;           /* 垂直方向の中央揃え */
-  gap: 0.5em;                    /* ボタン間に少し余白 */
+  display: flex;            /* ボタンを横並び */
+  align-items: center;      /* 垂直方向の中央揃え */
+  gap: 0.5em;               /* ボタン間に少し余白 */
 }
 
 /* 共通：タイマーボタン全体 */
 .btn-timer {
-  height: 2.65em;               /* 高さだけ統一 */
+  height: 2.65em;          /* 高さだけ統一 */
 }
 
 /* スタート／ストップ／再開専用：横幅を固定 */
 .btn-timer.main {
-  width: 6.4em;                /* これで切り替えボタンの横幅統一 */
+  width: 6.4em;           /* これで切り替えボタンの横幅統一 */
 }
 
 /* 登録ボタン：少しだけ左のボタンから間を空ける */
 .btn-timer.save {
-  margin-left: 0.2em;          /* スタートとの間に空白を入れて誤タップ防止 */
+  margin-left: 0.2em;     /* スタートとの間に空白を入れて誤タップ防止 */
 }
 
 /* 上位記録のリスト */
 #topTimesList {
-  margin: 0em;                 /* 高さ統一のため外側の余白を削除 */
+  margin: 0em;            /* 高さ統一のため外側の余白を削除 */
 }
 
 /* 画面移動のボタン全体のコンテナ */
 #timerBackControls {
-  margin: 0.7em 0;             /* 外側上下に余白(タイマーのボタンと揃うよう調整) */
+  margin: 0.7em 0;        /* 外側上下に余白(タイマーのボタンと揃うよう調整) */
 }
 
 /* ----------------------------
@@ -293,25 +293,36 @@ li {
   margin: 0.5em 0;           /* 外側の余白 */
   padding: 0.6em;            /* 内側の余白 */
   background: #ffffff;     /* 背景色 */
-  border: 1px solid #ddd;  /* 枠線の書式設定(太さ、タイプ、色)*/
+  border: 1px solid #ddd;  /* 枠線の書式設定(大きさ、タイプ、色)*/
   border-radius: 10px;       /* 角を丸くする */
 }
 
-/* 活動名 */
+/* 活動名リスト行 */
 .activityName {
-  cursor: pointer; /* カーソルが変わって押せるとわかる */
+  cursor: pointer;            /* カーソルをポインタに */
   text-decoration: underline; /* 下線追加 */
-  color: #333;   /* 文字色 */
+  color: #333;              /* 文字色 */
   flex: 1;         /* 残りのスペースで横に広がる (活動記録選択画面で削除ボタンの位置を統一するため)*/
 }
 .activityName:hover {
-  color: #e76f51;  /* 文字色 */
+  color: #e76f51;                /* 文字色 */
   text-shadow: 1px 1px 2px #ddd; /* ほんのり影で立体感 */
 }
 
-/* 記録 */
+/* 記録リスト行 */
 .recordText {
   flex: 1;  /* 残りのスペースで横に広がる (活動毎の記録一覧で削除ボタンの位置を統一するため)*/
+}
+
+/* 活動毎の記録一覧画面の記録リスト行 */
+#recordList .recordText {
+  cursor: pointer;            /* カーソルをポインタに */
+  text-decoration: underline; /* 下線追加 */
+  color: #333;              /* 文字色 */
+}
+#recordList .recordText:hover {
+  color: #e76f51;                /* 文字色 */
+  text-shadow: 1px 1px 2px #ddd; /* ほんのり影で立体感 */
 }
 
 /* 順位表示 */
@@ -340,6 +351,76 @@ li {
 }
 
 /* ----------------------------
+  記録詳細画面の表示
+----------------------------- */
+#recordDetailPage p,
+#recordDetailPage label {
+  font-size: 1.2em;   /* 文字サイズ */
+  margin: 0;          /* 外側の余白 */
+  padding: 0.5em;     /* 内側の余白 */
+
+/* 開発用 */
+/*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
+#recordDetailPage label {
+  display: block;     /* ラベルが重ならないように */
+  padding-bottom: 0;  /* 内側下部の余白(下部はテキストエリアに近づけるため0) */
+}
+
+/* 順位と記録を横並びにするコンテナ */
+.rank-time-row {
+  display: flex;         /* 横並びにする（Flexbox） */
+  margin: 0;             /* 外側の余白 */
+  padding: 0;            /* 内側の余白 */
+  gap: 2em;              /* 順位と記録の間のスペース */
+  flex-wrap: wrap;       /* 狭い画面では折り返し可 */
+  align-items: baseline; /* テキストの下揃えで自然に見える */
+
+/* 開発用 */
+/*  border: 2px dashed red;       /* 枠線を点線で表示（エリアの境界を視覚化） */ 
+}
+
+/* メモのテキストエリア */
+#detailMemo {
+  font-size: 1.1em;           /* 文字サイズ */
+  margin: 0.5em 0.2em;        /* 外側の余白 */
+  padding: 0.5em;             /* 内側の余白 */
+  width: 100%;                /* 横幅 */
+  box-sizing: border-box;     /* padding + borderを含めたwidthに */
+  border: 1px solid #ccc;   /* 枠線の書式設定(大きさ、タイプ、色)*/
+  border-radius: 10px;        /* 角を丸くする */
+  background-color: #fff;   /* 背景色 */
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
+}
+
+#detailMemo[readonly] {
+  background-color: #f0f0f0;   /* 背景色グレーアウト */
+  color: #555;                 /* 文字色グレー */
+  border: 1px solid #ccc;      /* 枠線 */
+  cursor: not-allowed;           /* カーソルを編集不可に */
+}
+
+/* メモのボタンエリア */
+#memoControls {
+  display: flex;                  /* 横並びに配置 */
+  justify-content: space-between; /* 左右に分けて配置（リセットボタンを右端に配置） */
+  align-items: center;            /* 垂直方向の中央揃え */
+  flex-wrap: wrap;                /* 画面幅が狭いとき折り返し可 */
+  margin: 1em 0;                  /* 上下に余白 */
+
+/* 開発用 */
+/*  border: 2px dashed red;       /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
+/* 右側グループ（メモ編集／キャンセル／メモ保存） */
+#memoRightButton {
+  display: flex;              /* 横並びに配置 */
+  justify-content: flex-end;  /* ボタン右寄せ */
+  gap: 0.5em;                 /* ボタン間に少し余白 */
+}
+
+/* ----------------------------
   ホームページの設定
 ----------------------------- */
 #homePage {
@@ -347,9 +428,7 @@ li {
   text-align: center;   /* 子要素（h1, buttonなど）を中央揃え */
 }
 
-/* ----------------------------
-  バックアップ・インポートエリアの配置
------------------------------ */
+/* バックアップ・インポートエリアの配置 */
 #backupArea {
   padding-top: 2em;        /* 内側上部の余白 */
   display: flex;           /* 横並びにする（Flexbox）  */
@@ -362,7 +441,7 @@ li {
   ポップアップ時のオーバーレイ
 ----------------------------- */
 #overlay {
-  display: block;       /* 最初は表示しておく（UID付与後JSで非表示にする） */
+  display: block;      /* 最初は表示しておく（UID付与後JSで非表示にする） */
   position: fixed;     /* 位置を固定 */
   top: 0;              /* 全画面配置 */
   left: 0;             /* 全画面配置 */
@@ -419,7 +498,7 @@ li {
 ----------------------------- */
 @media (max-width: 600px) {
   html{
-    padding: 0;          /* 内側の余白：(上 | 右 | 下 | 左) */
+    padding: 0;    /* 内側の余白：(上 | 右 | 下 | 左) */
   }
 
   body {
