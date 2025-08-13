@@ -100,8 +100,11 @@
   <div id="recordListPage" class="page">
     <h2 id="recordListTitle">活動名の記録</h2>
     <ul id="recordList"></ul>
-    <button class="btn-nav" onclick="showPage('actHistoryPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
-    <button class="btn-nav" onclick="backToTimerPage()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
+    <div class="recordBtnControls">
+      <button class="btn-nav" onclick="showPage('actHistoryPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
+      <button class="btn-nav" onclick="backToTimerPage()">タイマー<ruby>画面<rt>がめん</rt></ruby>へ</button>
+      <button class="btn-nav" data-mode="time" onclick="changeRecViewBtn()" id="chngRecViwBtn" >メモ表示</button>
+    </div>
   </div>
 
   <!-- 記録詳細画面 -->

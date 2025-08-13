@@ -325,6 +325,13 @@ li {
   text-shadow: 1px 1px 2px #ddd; /* ほんのり影で立体感 */
 }
 
+/* メモモードの時だけ省略表示(jsでクラス名memo-modeをオンオフ) */
+.memo-mode .recordText {
+  white-space: nowrap;       /* 改行しない */
+  overflow: hidden;          /* はみ出し部分を隠す */
+  text-overflow: ellipsis;   /* 「…」で省略表示 */
+}
+
 /* 順位表示 */
 .rank {
   font-weight: bold;
@@ -333,6 +340,18 @@ li {
 
 /* 開発用 */
 /*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
+/* ----------------------------
+  活動毎の記録一覧のボタンの整列用
+----------------------------- */
+.recordBtnControls {
+  display: flex;       /* 横に並べる(配置自由化) */
+  gap: 0.5em;          /* ボタン間に少し余白 */
+}
+
+#chngRecViwBtn {
+  margin-left: auto;   /* 右端寄せ用（flex内で左のmarginをautoにすることで右端に押し出す） */
 }
 
 /* ----------------------------

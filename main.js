@@ -148,9 +148,10 @@ async function showRecordListPage(highlightLast = false) {
     // 記録一覧リストのエレメントを構築
     const li = makeCommonRecList(record, index, true);
 
-    // 削除や照合用に日付・タイムを埋め込む
+    // 削除や照合、切替用に日付・タイム・メモを埋め込む
     li.dataset.date = record.date;
     li.dataset.time = record.time;
+    li.dataset.memo = record.memo || ""; // ※falseな値(null、undefined)の場合、空文字を設定
 
     // 削除ボタン表示
     const delBtn = document.createElement('button');
@@ -168,6 +169,18 @@ async function showRecordListPage(highlightLast = false) {
 
     list.appendChild(li);
   });
+
+  // タイム⇔メモ切替ボタンも初期化  
+  const btn = document.getElementById("chngRecViwBtn");
+  // 記録の有無でボタン表示・非表示を設定
+  if (records.length === 0) {
+    btn.style.display = "none"; // 非表示
+  } else {
+    btn.style.display = "inline-block"; // 表示
+    btn.dataset.mode = "time";   // タイムモードが初期表示
+    btn.textContent = "メモ表示";
+  }
+
   document.getElementById('recordListTitle').innerHTML = `${currentActivity}の<ruby>記録<rt>きろく</rt></ruby>`; // 活動名を表示
   showPage('recordListPage');
 }
@@ -189,7 +202,7 @@ function makeCommonRecList(record, index,  enableClick = false) {
   const recordSpan = document.createElement('span');
   recordSpan.classList.add('recordText');
   const formatted = formatTime(parseFloat(record.time) * 1000); // 秒→ms→フォーマット
-  const shortDate = record.date.replace(/^20/, ''); // 2025-01-01 → 25-01-01
+  const shortDate = record.date.slice(2); // 2025-01-01 → 25-01-01
   recordSpan.innerHTML = `${formatted.text}<small>${formatted.small}</small>（${shortDate}）`; // 表示名
   // 活動毎の記録一覧に遷移する場合、クリックで記録詳細画面に遷移
   if (enableClick) {
@@ -200,6 +213,41 @@ function makeCommonRecList(record, index,  enableClick = false) {
   li.appendChild(recordSpan);
 
   return li;
+}
+
+// ============================== 活動毎の記録一覧 ==============================
+// -----------------------------
+// 記録一覧の表示モード切替（タイム ⇔ メモ）
+// -----------------------------
+function changeRecViewBtn() {
+  // タイム⇔メモ切替ボタンと対象活動の全記録リスト要素にアクセス
+  const btn = document.getElementById("chngRecViwBtn");
+  const list = document.getElementById("recordList");
+  // タイムモードか確認
+  const isTimeMode = btn.dataset.mode !== "memo"; 
+
+  // モード切り替え
+  btn.dataset.mode = isTimeMode ? "memo" : "time";         // 元がタイムモードならメモモードに
+  btn.textContent = isTimeMode ? "タイム表示" : "メモ表示";  // 元がタイムモードならメモモードになるため切替ボタンは「タイム表示」に
+
+  // CSS設定のためchngRecViwBtnがメモモードの場合、recordListにclass名memo-modeを付与
+  list.classList.toggle("memo-mode", btn.dataset.mode === "memo");
+
+  // リスト内容を更新するためループ
+  list.querySelectorAll("li").forEach(li => {
+    // タイムモードの場合
+    if (btn.dataset.mode === "time") {
+      // タイム表示
+      const formatted = formatTime(parseFloat(li.dataset.time) * 1000); // 秒→ms→フォーマット
+      const shortDate = li.dataset.date.slice(2); // 2025-01-01 → 25-01-01
+      li.querySelector(".recordText").innerHTML = `${formatted.text}<small>${formatted.small}</small>（${shortDate}）`;
+
+    // メモモードの場合
+    } else {
+      // メモ表示
+      li.querySelector(".recordText").textContent = li.dataset.memo?.trim() || "メモなし";
+    }
+  });
 }
 
 // ============================== 記録詳細画面 ==============================
@@ -282,6 +330,25 @@ async function saveEditedMemo() {
 
   // Firestoreのmemoを更新（他のフィールドは変更しない）
   await updateQueryData("records", recSnaps[0].id, { memo: newMemo });
+
+  // DOMから対象活動の全記録リスト要素を取得
+  const list = document.getElementById("recordList");
+
+  // DOMから更新する要素を特定
+  const targetLi = Array.from(list.children).find(li =>
+    li.dataset.date === currentRecord.date && parseFloat(li.dataset.time) === currentRecord.time
+  );
+
+  // メモを更新
+  if (targetLi) {
+    targetLi.dataset.memo =  newMemo;  // メモのデータセットを更新
+    
+    // タイム⇔メモ切替ボタンにアクセス
+    const btn = document.getElementById("chngRecViwBtn");
+    // メモモードだった場合は表示も更新
+    const isMemoMode = btn.dataset.mode == "memo"; 
+    if (isMemoMode) targetLi.querySelector(".recordText").textContent = newMemo;
+  }
 
   setMemoEditMode(false); // 編集モード解除
   currentRecord.memo = newMemo; // UI上も更新
@@ -381,13 +448,16 @@ async function deleteRecord(activity, target) {
   // htmlのDOMの表示リストからDB削除した記録を取り除く
   if (targetLi) targetLi.remove();
 
-  // DOMの残りのリストで順位を再計算して更新
-  const remainingLis = list.querySelectorAll('li');
-  // 記録一覧リストの中身をループ
-  remainingLis.forEach((li, index) => {
-    const rankSpan = li.querySelector('.rank'); // 中身から順位のエレメント取得
-    rankSpan.textContent = `${index + 1}位`;    // 順位を再設定
+  // 記録一覧リストの中身をループし、DOMの残りのリストで順位を再計算して更新
+  list.querySelectorAll('li').forEach((li, index) => {
+    li.querySelector('.rank').textContent = `${index + 1}位`;    // 順位を再設定
   });
+
+  // 残り件数0の場合、タイム⇔メモ切替ボタンを非表示
+  const chngBtn = document.getElementById("chngRecViwBtn");
+  if (list.children.length === 0) {
+    chngBtn.style.display = "none"; // 非表示
+  }
 }
 
 // ============================== バックアップ ==============================
@@ -477,7 +547,7 @@ const saveEditedMemoBL = funcLock(saveEditedMemo);
 // -----------------------------
 const globalFunctions = {
   showPage, addActivityBL, backToRecordListPage, backToTimerPage, downloadBackup, handleImportFile, 
-  editMemo, cancelEditedMemo, saveEditedMemoBL, 
+  changeRecViewBtn, editMemo, cancelEditedMemo, saveEditedMemoBL, 
   showRecordListPage //timer.jsから呼ぶため
 };
 Object.assign(window, globalFunctions);
