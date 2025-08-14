@@ -164,14 +164,16 @@ async function showRecordListPage(highlightLast = false) {
 
     // レコード登録時で最新の日付の場合
     if (highlightLast && new Date(record.date).getTime() === newestTime) {
-      li.style.color = 'red'; // 直近の記録を赤色で表示
+      li.querySelector(".recordText").classList.add("highlightRec"); // 直近の記録を赤色で表示(CSSで対応)
     }
 
     list.appendChild(li);
   });
 
-  // タイム⇔メモ切替ボタンも初期化  
+  // タイム・メモ切替ボタンも初期化  
   const btn = document.getElementById("chngRecViwBtn");
+  // メモモードにした時のCSS設定用クラス名が残っている場合に備え削除処理
+  list.classList.remove("memo-mode");
   // 記録の有無でボタン表示・非表示を設定
   if (records.length === 0) {
     btn.style.display = "none"; // 非表示
@@ -220,7 +222,7 @@ function makeCommonRecList(record, index,  enableClick = false) {
 // 記録一覧の表示モード切替（タイム ⇔ メモ）
 // -----------------------------
 function changeRecViewBtn() {
-  // タイム⇔メモ切替ボタンと対象活動の全記録リスト要素にアクセス
+  // タイム・メモ切替ボタンと対象活動の全記録リスト要素にアクセス
   const btn = document.getElementById("chngRecViwBtn");
   const list = document.getElementById("recordList");
   // タイムモードか確認
@@ -230,7 +232,7 @@ function changeRecViewBtn() {
   btn.dataset.mode = isTimeMode ? "memo" : "time";         // 元がタイムモードならメモモードに
   btn.textContent = isTimeMode ? "タイム表示" : "メモ表示";  // 元がタイムモードならメモモードになるため切替ボタンは「タイム表示」に
 
-  // CSS設定のためchngRecViwBtnがメモモードの場合、recordListにclass名memo-modeを付与
+  // chngRecViwBtnがメモモードの場合、recordListにclass名memo-modeを付与(CSSでメモモードの時だけ省略表示にするため)
   list.classList.toggle("memo-mode", btn.dataset.mode === "memo");
 
   // リスト内容を更新するためループ
@@ -343,7 +345,7 @@ async function saveEditedMemo() {
   if (targetLi) {
     targetLi.dataset.memo =  newMemo;  // メモのデータセットを更新
     
-    // タイム⇔メモ切替ボタンにアクセス
+    // タイム・メモ切替ボタンにアクセス
     const btn = document.getElementById("chngRecViwBtn");
     // メモモードだった場合は表示も更新
     const isMemoMode = btn.dataset.mode == "memo"; 
@@ -453,7 +455,7 @@ async function deleteRecord(activity, target) {
     li.querySelector('.rank').textContent = `${index + 1}位`;    // 順位を再設定
   });
 
-  // 残り件数0の場合、タイム⇔メモ切替ボタンを非表示
+  // 残り件数0の場合、タイム・メモ切替ボタンを非表示
   const chngBtn = document.getElementById("chngRecViwBtn");
   if (list.children.length === 0) {
     chngBtn.style.display = "none"; // 非表示

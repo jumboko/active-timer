@@ -80,101 +80,77 @@ export async function mergeUserData(inputActivities, inputRecords, currentActNam
   const currentUid = auth.currentUser.uid;
   const currentRecords = await getQueryData("records", { userId: currentUid });
 
+  // currentRecords を Map に変換　※キーは`actName|date|time`の文字列、値はcurrentRecordsの1レコード
+  const currentRecMap = new Map(
+    currentRecords.map(r => [`${r.actName}|${r.date}|${r.time}`, r])
+  );
+
   // 並列でまとめて登録用の変数
-  const actAdds = []; 
-  const recAdds = [];
+  const actAdds = [], recAdds = []; 
   // 記録をマージする際にメモのみ差分があり両方に値がある場合のレコード情報取得変数
   const mergeWarnings = [];
 
   // inputアクティビティが存在する場合、1件ずつ処理
   for (const inputAct of inputActivities) {
     // 既存アカウントに記録を登録する活動名を設定
-    let  setActName = inputAct.actName;
+    let setActName = inputAct.actName;
 
     // 登録をスキップしない場合（重複なし、または重複分を分ける選択の場合）※マージする場合で活動名重複時のみスキップ
     if (!dupActNames.includes(setActName)) {
       // 名称の重複回避のため活動名を更新
        setActName = getUniqueName(inputAct.actName, currentActNames);
 
-      // 新たな活動を追加（あとでまとめて Promise.all）
-      actAdds.push(addQueryData("activities", {
-        ...inputAct,         // 取得情報をそのまま展開
-        actName: setActName, // 上書き（重複回避で名称変更の可能性があるため）
-        userId: currentUid,  // 上書き
-      }));
+      // 活動を追加(纏めてPromise.all) ...inputAct=取得情報のまま展開、setActName=上書き(重複回避で更新の可能性有)、currentUid=現在ユーザで上書き
+      actAdds.push(addQueryData("activities", {...inputAct, actName: setActName, userId: currentUid}));
 
       // 名前が重複しないようにリストに追加
       currentActNames.push(setActName);
-    } else {
-      console.log(`⏭ 活動名重複スキップ(マージ対応): ${setActName}`); // 処理の遅延回避で削除検討？？？？？？？？？？？？
     }
 
     // 取得中のinputアクティビティに対応する記録一覧を取得
     const inputActRecs = inputRecords.filter(r => r.actName=== inputAct.actName);
     // 記録一覧を1件ずつ処理(活動名重複を分けない場合もそのまま登録)
     for (const inputRec of inputActRecs) {
-      // 既存レコード一覧から完全一致する記録（重複）を検索
-      const dupRec = currentRecords.find(cr =>
-        cr.actName === setActName &&
-        cr.date === inputRec.date &&
-        cr.time === inputRec.time
-      );
+      // 既存レコード一覧マップから重複する記録を取得
+      const dupRec = currentRecMap.get(`${setActName}|${inputRec.date}|${inputRec.time}`);
 
       // 重複がない場合
       if (!dupRec) {
-        // 記録を追加（あとでまとめて Promise.all）
-        recAdds.push(addQueryData("records", {
-          ...inputRec,         // 取得情報をそのまま展開
-          actName: setActName, // 上書き（重複回避で名称変更の可能性があるため）
-          userId: currentUid   // 上書き
-        }));
-
-      // 重複ありの場合
-      } else {
-         // メモ内容を取得　※falseな値(null、undefined)の場合、空文字を設定
-        const inputMemo = inputRec.memo || "";
-        const currentMemo = dupRec.memo || "";
-
-        let mergedMemo = currentMemo;
-
-        // インプットメモに値がある、かつメモの内容が異なる場合　※インプットにメモがない、またはメモに差異がない場合はスキップ
-        if (inputMemo && inputMemo !== currentMemo) {
-          // 既存メモが空の場合
-          if (!currentMemo) {
-            mergedMemo = inputMemo; // インプットメモがupdate対象
-
-          // 両方に値はあるが、既存メモに以前にマージした痕跡がある場合
-          } else if (currentMemo.includes('\nーーーーーここからマージメモーーーーー\n')) {
-            console.log(`⚠️ 既にメモにマージの痕跡があるためスキップ: ${inputMemo}`);
-            continue; // 次のレコードへ
-
-          // 両方に値がある場合
-          } else  {
-            mergedMemo = `${currentMemo}\nーーーーーここからマージメモーーーーー\n${inputMemo}`; // メモをマージ
-
-            // マージしたことをユーザに伝える情報取得
-            mergeWarnings.push({
-              actName: setActName,
-              date: inputRec.date,
-              time: inputRec.time
-            });
-          }
-          // 記録を更新（あとでまとめて Promise.all）
-          recAdds.push(updateQueryData("records", dupRec.id, { memo: mergedMemo }));
-          console.log(`メモ内容をマージ更新: ${setActName} (${inputRec.date}, ${inputRec.time}s)`);
-        } else {
-          console.log(`⏭ 記録重複スキップ: ${setActName} (${inputRec.date}, ${inputRec.time}s)`); // 処理の遅延回避で削除検討？？？？？？？？？？？？
-        }
+        // 記録を追加(纏めてPromise.all) ...inputRec=取得情報のまま展開、setActName=上書き(重複回避で更新の可能性有)、currentUid=現在ユーザで上書き
+        recAdds.push(addQueryData("records", {...inputRec, actName: setActName, userId: currentUid}));
+        continue; // 次のレコードへ
       }
+
+      //重複の場合、メモ内容が異なるか確認のためメモ内容を取得
+      const inputMemo = inputRec.memo || ""; // ※falseな値(null、undefined)の場合、空文字を設定
+      const currentMemo = dupRec.memo || "";
+
+      // インプットメモが空 or メモの内容が一致の場合スキップ
+      if (!inputMemo || inputMemo === currentMemo) continue;
+      // 既にマージ痕跡ありならスキップ
+      if (currentMemo.includes('\nーーーーーここからマージメモーーーーー\n')) continue;
+
+      // 既存メモが空でない場合はインプットメモとマージ、空の場合はインプットメモを設定
+      const mergedMemo = currentMemo
+       ? `${currentMemo}\nーーーーーここからマージメモーーーーー\n${inputMemo}`
+       : inputMemo;
+
+      // 既存メモが空でない場合
+      if (currentMemo) {
+        // マージしたことをユーザに伝える情報取得
+        mergeWarnings.push({actName: setActName, date: inputRec.date, time: inputRec.time});
+      }
+      // 記録を更新（あとでまとめて Promise.all）
+      recAdds.push(updateQueryData("records", dupRec.id, { memo: mergedMemo }));
     }
   }
   // 並列でまとめて登録（activities + records）
   await Promise.all([...actAdds, ...recAdds]);
-
+  console.log(`活動追加: ${actAdds.length} 件`);
+  console.log(`記録追加: ${recAdds.length - mergeWarnings.length} 件`);
+  console.log(`メモ更新: ${mergeWarnings.length} 件`);
   // メモマージ警告があれば通知
-  if (mergeWarnings.length > 0) {
-    showMergeModal(mergeWarnings);
-  }
+  if (mergeWarnings.length > 0) {showMergeModal(mergeWarnings)};
 }
 
 // -----------------------------
