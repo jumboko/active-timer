@@ -82,7 +82,7 @@ function stopTimer() {
   updateTimerDisplay(elapsedTime); // 最終的な記録を画面表示
 
   // ボタン表示制御
-  setTimerBtn({resumeBtn:'inline-block', saveBtn:'inline-block', resetBtn:'inline-block'});
+  setTimerBtn({resumeBtn:'inline-block', saveBtn:'inline-block', resetBtn:'inline-block', timerMemo:'inline-block'});
 
   disableWakeLock(); // スリープ防止を解除
 }
@@ -96,7 +96,8 @@ async function saveTimer() {
     actName: currentActivity,
     time: elapsedTime / 1000, // 秒で登録
     date: new Date().toLocaleString(),
-    userId: auth.currentUser.uid
+    userId: auth.currentUser.uid,
+    memo: document.getElementById("timerMemo").value || ""
   });
 
   resetTimer(); // タイマーリセット
@@ -112,6 +113,8 @@ export function resetTimer() {
   startTime = null;      // 初期化と停止フラグの役割
   elapsedTime = 0;       // 累積時間を初期化
   updateTimerDisplay(0); // 画面表示を0にリセット
+  
+  document.getElementById("timerMemo").value = "";// メモをクリア
 
   // ボタン表示制御：初期状態に戻す
   setTimerBtn({startBtn: 'inline-block'});
@@ -130,6 +133,7 @@ function setTimerBtn(config) {
     resumeBtn: 'none',
     saveBtn: 'none',
     resetBtn: 'none',
+    timerMemo: 'none',
     ...config // 引数のオブジェクトを展開し表示するボタンを上書き
   };
 

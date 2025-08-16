@@ -208,8 +208,6 @@ input[type="text"], select {
   flex: 1;                       /* 余白に対し横幅を均等にとる */
   display: flex;                 /* 横並びにする（Flexbox） */
   flex-direction: column;        /* フレックス化したtitle,timeDisplay,ボタンを縦並びにする */
-  gap: 1em;                      /* アイテムの間隔を空ける */
-  min-width: 380px;              /* 最低幅を確保 */
 
 /* 開発用 */
 /*  border: 2px dashed red;       /* 枠線を点線で表示（エリアの境界を視覚化） */
@@ -218,22 +216,44 @@ input[type="text"], select {
 /*  タイトル（タイマー／上位記録）  */
 #timerTitle,
 .rankColumn h3 {
-  margin: 0;    /* 外側の余白 */
+  margin: 0 0 1em 0;    /* 外側の余白：(上 | 右 | 下 | 左) */
 
 /* 開発用 */
 /*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */ 
+}
+
+/* メモ欄を配置するための親要素 */
+#timeWrapper {
+  position: relative; /* メモ欄の基準位置を指定 */
 }
 
 /* タイマーの表示部分（枠で囲って見やすく） */
 #timeDisplay {
   font-size: 2.5em;              /* 文字サイズ */
   text-align: center;            /* 水平方向の中央揃え */
-  margin: 0.2em 0;               /* 外側上下に余白 */
+  margin: 0.05em 0 0 0;          /* 外側の余白：(上 | 右 | 下 | 左) ※タイトルと見出しの文字サイズの差分を埋める */
   padding: 1em;                  /* 内側の余白 */
   background: #fff3c4;         /* 文字サイズ */
   border: 2px dashed #f4a261;  /* 枠線を点線で表示（エリアの境界を視覚化） */
   border-radius: 12px;           /* 角を丸くする */
   box-shadow: 2px 2px 6px rgba(0,0,0,0.1); /* ほんのり影で立体感 */
+}
+
+/* メモのテキストエリア */
+#timerMemo {
+  display: none;              /* 画面非表示 */
+  position: absolute;         /* 基準値から自由に配置(timeWrapperに基準設定) */
+  top: 100%;                  /* 要素の下側に */
+  left: 0;                    /* 左端を合わせる */
+  margin-top: 0.3em;          /* 外側上部 */
+  padding: 0.5em;             /* 内側の余白 */
+  width: 100%;                /* 横幅 */
+  box-sizing: border-box;     /* padding + borderを含めたwidthに */
+  font-size: 1em;             /* 文字サイズ */
+  border: 1px solid #ccc;   /* 枠線の書式設定(大きさ、タイプ、色)*/
+  border-radius: 10px;        /* 角を丸くする */
+  background-color: #fff;   /* 背景色 */
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
 }
 
 /* タイマー操作ボタン全体のコンテナ */
@@ -242,7 +262,7 @@ input[type="text"], select {
   justify-content: space-between; /* 左右に分けて配置（リセットボタンを右端に配置） */
   align-items: center;            /* 垂直方向の中央揃え */
   flex-wrap: wrap;                /* 画面幅が狭いとき折り返し可（ボタンが折り返す前に上位記録が縦になるため本来は起こりえない） */
-  margin: 1em 0;                  /* 上下に余白 */
+  margin-top: 2em;                /* 外側上部に余白 */
 
 /* 開発用 */
 /*  border: 2px dashed red;       /* 枠線を点線で表示（エリアの境界を視覚化） */
@@ -273,11 +293,31 @@ input[type="text"], select {
 /* 上位記録のリスト */
 #topTimesList {
   margin: 0em;            /* 高さ統一のため外側の余白を削除 */
+  min-height: 10.25em;    /* リスト3件分の高さを確保しボタン位置を保つ */
 }
 
 /* 画面移動のボタン全体のコンテナ */
 #timerBackControls {
-  margin: 0.7em 0;        /* 外側上下に余白(タイマーのボタンと揃うよう調整) */
+  margin-top: 1.1em;        /* 外側上部に余白(タイマーのボタンと揃うよう調整) */
+
+/* 開発用 */
+/*  border: 2px dashed red;  /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
+/* タイマー独自の縦表示のタイミング（縦並び時） */
+@media (max-width: 850px) {
+  #timerLayout {
+    flex-direction: column; /* 縦並びに強制 */
+  }
+    /* タイマー画面を縦表示に */
+  .timerColumn,
+  .rankColumn {
+    min-width: 100%; /* 横幅最大に自動調整 */
+  }
+  /* タイマー画面のリスト */
+  #topTimesList {
+    min-height: unset; /* 高さ制限を解除 */
+  }
 }
 
 /* ----------------------------
@@ -407,11 +447,11 @@ li {
 
 /* メモのテキストエリア */
 #detailMemo {
-  font-size: 1.1em;           /* 文字サイズ */
   margin: 0.5em 0.2em;        /* 外側の余白 */
   padding: 0.5em;             /* 内側の余白 */
   width: 100%;                /* 横幅 */
   box-sizing: border-box;     /* padding + borderを含めたwidthに */
+  font-size: 1.1em;           /* 文字サイズ */
   border: 1px solid #ccc;   /* 枠線の書式設定(大きさ、タイプ、色)*/
   border-radius: 10px;        /* 角を丸くする */
   background-color: #fff;   /* 背景色 */
@@ -557,11 +597,5 @@ li {
   /* 昇順降順プルダウン */
   #recordOrder {
   /*  height: 2.6em; /* テキストボックスと高さ揃える ??????????????????????????聞くか分からん、safariでは形式が異なる */
-  }
-
-  /* タイマー画面を縦表示に */
-  .timerColumn,
-  .rankColumn {
-    min-width: 100%; /* スマホ画面の横幅に自動調整 */
   }
 }
