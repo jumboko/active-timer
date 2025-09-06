@@ -65,6 +65,31 @@
       <div class="timerColumn">
         <h2 id="timerTitle">活動名のタイマー</h2>
         <div id="timeWrapper">
+          <!-- ベクター形式の描画 -->
+          <!-- viewBox(横400 × 縦130の図形で固定 ※CSSで幅を伸縮させるがSVG内部の長さは固定) -->
+          <svg id="progressRect" viewBox="-5 -5 410 140" preserveAspectRatio="none"><!-- preserveAspectRatio(アスペクト比の挙動指定 ※noneは不均等) -->
+            <!-- path(自由描画), M(始点x/y), H(水平方向x), V(垂直方向y), Q(2次ベジェ曲線、引っ張る座標と終点座標を指定) -->
+            <!-- stroke(枠線色), stroke-width(線幅), fill(塗りつぶし色), vector-effect(non-scaling-strokeで線幅を固定) -->
+            <path d="M200,0
+                     H380 Q400,0 400,20
+                     V110 Q400,130 380,130
+                     H20  Q0,130 0,110
+                     V20  Q0,0   20,0
+                     H200"
+                  stroke="#f4a261" stroke-width="10" fill="#fff3c4" vector-effect="non-scaling-stroke"/>
+            <!-- 進捗バー(緑で時計回りに進む) -->
+            <!-- stroke-linecap(線の始点終点の形), stroke-dasharray(線の点線幅を指定), stroke-dashoffset(点線の始点位置を変更) -->
+            <path id="progressFrame"
+                  d="M200,0
+                     H380 Q400,0 400,20
+                     V110 Q400,130 380,130
+                     H20  Q0,130 0,110
+                     V20  Q0,0   20,0
+                     H200"
+                  stroke="#4caf50" stroke-width="10" fill="none" vector-effect="non-scaling-stroke"
+                  stroke-linecap="butt"
+                  stroke-dasharray="0 0" stroke-dashoffset="0"/>
+          </svg>
           <p id="timeDisplay">0h00m00s<small>00</small></p>
           <textarea id="timerMemo" rows="1" maxlength="100" placeholder="メモ（最大100文字）"></textarea>
         </div>

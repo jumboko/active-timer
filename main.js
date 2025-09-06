@@ -6,7 +6,7 @@
 // インポート
 import { auth } from "./firebaseCore.js";
 import { getQueryData, addQueryData, updateQueryData, deleteQueryData } from './dbUtils.js';
-import { formatTime, updateTimerDisplay, resetTimer } from './timer.js';
+import { formatTime, resetTimer, setProgressBar, initProgressBar } from './timer.js';
 import { mergeCheck } from './dataMerge.js';
 import { funcLock } from "./functionLock.js";
 
@@ -21,7 +21,6 @@ let currentRecord = null;          // 現在選択されている記録
 // -----------------------------
 window.addEventListener("auth-ready", async () => {
   await loadActivities(); // 活動一覧の読み込み
-  updateTimerDisplay(0); // タイマー初期表示を0で統一（0h00m00s<small>00</small>）
   console.log("画面初期化");
 });
 
@@ -29,8 +28,13 @@ window.addEventListener("auth-ready", async () => {
 // ページ切り替え
 // -----------------------------
 function showPage(id) {
+  // タイマー画面に遷移
+  if (id === 'timerPage') {
+    window.addEventListener("resize", initProgressBar); // resize監視(タイマー画面進捗バー用)
+
   // 現画面がtimerPageで別画面に遷移する場合
-  if (currentPageId === 'timerPage' && id !== 'timerPage') {
+  } else if (currentPageId === 'timerPage' && id !== 'timerPage') {
+    window.removeEventListener("resize", initProgressBar); // resize監視(タイマー画面進捗バー用)を解除
     resetTimer();  // 測定キャンセル
   }
 
@@ -119,8 +123,12 @@ async function showTimerPage() {
     // 上位3タイムリスト表示のエレメントを構築
     list.appendChild(makeCommonRecList(record, index));
   });
+  resetTimer(); // 測定キャンセル ※タイマー画面以外の時は基本リセット済だが念のため初期化
+
   document.getElementById('timerTitle').textContent = `${currentActivity}のタイマー`; // 活動名を表示
   showPage('timerPage');
+
+  setProgressBar(records[0]?.time); // 進捗バーの設定のため1位の記録を渡す(記録なし=undefined)※showPageの後に書く
 }
 
 // -----------------------------

@@ -15,7 +15,7 @@ let timerInterval;              // リアルタイム表示用 setInterval の�
 let wakeLock = null;            // Wake Lock スリープ防止用
 
 // -----------------------------
-// 画面状態が表示または非表示に変更された場合に動作
+// 画面状態が表示または非表示に変更された場合に動作  タイマー画面が設定されている時のみ動作するよう変更する？？？？？？？？？？？？？？？？？？？？？
 // -----------------------------
 document.addEventListener("visibilitychange", () => {
   // 画面状態がvisible(画面再アクティブ)に変わり、startTimeがnullでない(タイマー動作中)場合
@@ -46,6 +46,8 @@ export function formatTime(ms) {
 export function updateTimerDisplay(ms) {
   const time = formatTime(ms);
   document.getElementById('timeDisplay').innerHTML = `${time.text}<small>${time.small}</small>`;
+
+  updateProgress(ms);  // 進捗バーを更新
 }
 
 // -----------------------------
@@ -85,6 +87,7 @@ function stopTimer() {
   setTimerBtn({resumeBtn:'inline-block', saveBtn:'inline-block', resetBtn:'inline-block', timerMemo:'inline-block'});
 
   disableWakeLock(); // スリープ防止を解除
+//  console.log("進捗バー状況:", { perimeter, progress, dasharray: rect.style.strokeDasharray, dashoffset: rect.style.strokeDashoffset});
 }
 
 // -----------------------------
@@ -112,6 +115,7 @@ export function resetTimer() {
   clearInterval(timerInterval);
   startTime = null;      // 初期化と停止フラグの役割
   elapsedTime = 0;       // 累積時間を初期化
+  progStopFlg = false;   // 進捗バーの更新停止解除
   updateTimerDisplay(0); // 画面表示を0にリセット
   
   document.getElementById("timerMemo").value = "";// メモをクリア
@@ -175,6 +179,108 @@ async function disableWakeLock() {
     }
     wakeLock = null;
   }
+}
+
+// 進捗バー制御用の変数 
+let rect = null;         // 進捗バーのSVGパス要素
+let perimeter = 0;       // 周囲長（px）
+let topRecordTime = 0;   // 全体の制限時間（秒）
+let progress = 0;        // 進捗割合（0～1）
+let progStopFlg = false; // 進捗1でバーを赤にした後停止させるフラグ
+
+// -----------------------------
+// 進捗バーと変数を初期化
+/**-----------------------------
+ * @param {number} sec - 完走にかける時間（秒）
+ */
+export function setProgressBar(sec) {
+  initProgressBar();   // 進捗バーの初期化
+  topRecordTime = sec; // 制限時間を保存
+  progress = 0;        // 初期化
+
+//console.log("✅ setTopRecordTime 実行:", {topRecordTime});
+}
+
+// -----------------------------
+// 進捗バーの再描画(初期化も含む)
+// - 進捗バー初期化及び、画面リサイズ時に呼び出す
+// -----------------------------
+export function initProgressBar() {
+  // 進捗バーのSVGパス要素取得
+  if (!rect) rect = document.getElementById("progressFrame");
+  // 実際の画面上でのパス長を近似
+  perimeter = getScreenPerimeter(rect, 500);
+
+  rect.style.strokeDasharray = perimeter; // 線の全長を指定
+  rect.style.strokeDashoffset = perimeter * (1 - progress); // 進捗に応じた描画設定（最初は全て隠す※進捗0）
+
+  console.log("進捗バー設定:", { perimeter, progress, dasharray: rect.style.strokeDasharray, dashoffset: rect.style.strokeDashoffset});
+}
+
+// -----------------------------
+// SVG図形の画面上の周囲を近似的に計算する関数(vector-effect="non-scaling-stroke"による差異を修正)
+// - サンプリングしてスクリーン座標に変換し、距離を算出
+/**-----------------------------
+ * @param {SVGPathElement} path - 計算対象のパス要素
+ * @param {number} samples - サンプリング数（大きいほど精度↑、負荷↑）
+ * @returns {number} - スクリーン座標の近似周囲長(px)
+ */
+function getScreenPerimeter(path, samples = 500) {
+  const total = path.getTotalLength();     // SVG内部座標での周囲
+  const svg = path.ownerSVGElement;        // 所属する親の<svg>要素を取得(getElementByIdで直接取得と同じ)
+  const pt = svg.createSVGPoint();         // 一時的に座標を保持するオブジェクト
+  const ctm = path.getScreenCTM();         // SVG内部座標をスクリーン座標に変換する計算式を持つ行列関数
+
+  let prev = null;     // 一つ前のループで変換したスクリーン座標
+  let screenLen = 0;   // スクリーン座標の累積距離
+
+  // SVG内部座標の周囲を分割し各々の座標をスクリーン座標に変換し合算する
+  for (let i = 0; i <= samples; i++) {
+    // サンプリング位置（SVG内部座標での周囲をサンプル数で分割して取得）
+    const len = (i / samples) * total;
+    // パス上の座標（分割した周囲の位置をSVG内部座標で取得）
+    const p = path.getPointAtLength(len);
+
+    // 変換したいSVG内部座標x,yをptオブジェクトに設定
+    pt.x = p.x;
+    pt.y = p.y;
+    // SVG内部座標→スクリーン座標変換式を用いて指定したx,y座標を変換
+    const sp = pt.matrixTransform(ctm);
+
+    // 一つ前のループの座標との距離を合算　※三平方の定理(二乗和の平方根「Math.hypot」)で前の座標と今の座標の距離を計算
+    if (prev) {screenLen += Math.hypot(sp.x - prev.x, sp.y - prev.y);} // 初回は始点の位置設定のみのためスキップ
+    prev = sp; // 変換したスクリーン座標を保持    
+  }
+  return screenLen; // スクリーン座標の周囲を返す
+}
+
+// -----------------------------
+// 進捗バーを時間経過に応じて更新する
+/**-----------------------------
+ * @param {number} ms - 経過時間（ミリ秒）※elapsedTimeは測定中は更新されないため引数で取得
+ */
+function updateProgress(ms) {
+  // 既存タイムがない場合は進捗はないのでスキップ、進捗が1を超えバーを赤くした後もスキップ
+  if (!topRecordTime || progStopFlg) return; 
+
+  // 経過時間（秒）
+  const elapsedSec = ms / 1000;
+  // 経過時間をトップ記録で割り進捗割合を計算
+  progress = Math.min(elapsedSec / topRecordTime, 1);
+
+  // dashoffset を更新して線を描画
+  rect.style.strokeDashoffset = perimeter * (1 - progress);
+
+  //制限時間内の場合
+  if (progress < 1) {
+    rect.style.stroke = "#4caf50"; // 緑色で進捗バー更新
+  // 制限時間を超えた場合
+  } else {
+    rect.style.stroke = "red";       // 赤色で進捗バー更新
+    progStopFlg = true;              // フラグを立てて更新停止
+  }
+
+//console.log("⏱ updateProgress:", {elapsedSec,topRecordTime,progress, dashoffset: rect.style.strokeDashoffset});
 }
 
 // ============================== 連打防止機能設定 ==============================

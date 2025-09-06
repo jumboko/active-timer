@@ -222,21 +222,35 @@ input[type="text"], select {
 /*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */ 
 }
 
-/* メモ欄を配置するための親要素 */
+/* ディスプレイとメモ欄を配置するための親要素 */
 #timeWrapper {
-  position: relative; /* メモ欄の基準位置を指定 */
+  position: relative;     /* ディスプレイとメモ欄の基準位置を指定 */
+  width: 100%;            /* 横幅は可変 */
+  height: 142px;          /* 高さは固定 */
+  
+/* 開発用 */
+/*  border: 2px dashed green;  /* 枠線を点線で表示（エリアの境界を視覚化） */
 }
 
-/* タイマーの表示部分（枠で囲って見やすく） */
+/* ディスプレイの表示 */
+#progressRect {
+  width: 100%;             /* 横幅は可変 */
+  height: 100%;            /* 高さは固定(上の要素に合わせる) */
+  filter: drop-shadow( 1px 1px 3px rgba(0,0,0,0.3)); /* ほんのり影で立体感 */
+
+/* 開発用 */
+/*  border: 2px dashed rgb(9, 0, 128);  /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
+/* タイマーの数字表示 */
 #timeDisplay {
-  font-size: 2.5em;              /* 文字サイズ */
-  text-align: center;            /* 水平方向の中央揃え */
-  margin: 0.05em 0 0 0;          /* 外側の余白：(上 | 右 | 下 | 左) ※タイトルと見出しの文字サイズの差分を埋める */
-  padding: 1em;                  /* 内側の余白 */
-  background: #fff3c4;         /* 文字サイズ */
-  border: 2px dashed #f4a261;  /* 枠線を点線で表示（エリアの境界を視覚化） */
-  border-radius: 12px;           /* 角を丸くする */
-  box-shadow: 2px 2px 6px rgba(0,0,0,0.1); /* ほんのり影で立体感 */
+  position: absolute;               /* 基準値から自由に配置(timeWrapperに基準設定) */
+  top: 50%;                         /* 要素内の位置を中央に */
+  left: 50%;                        /* 要素内の位置を中央に */
+  transform: translate(-50%, -50%); /* 要素の中心を親の中央に揃える */
+  margin: 0;                        /* 外側の余白 */
+  padding: 0;                       /* 内側の余白 */
+  font-size: 2.5em;                 /* 文字サイズ */
 }
 
 /* メモのテキストエリア */
@@ -245,7 +259,7 @@ input[type="text"], select {
   position: absolute;         /* 基準値から自由に配置(timeWrapperに基準設定) */
   top: 100%;                  /* 要素の下側に */
   left: 0;                    /* 左端を合わせる */
-  margin-top: 0.3em;          /* 外側上部 */
+  margin-top: 0.25em;          /* 外側上部 */
   padding: 0.5em;             /* 内側の余白 */
   width: 100%;                /* 横幅 */
   box-sizing: border-box;     /* padding + borderを含めたwidthに */
