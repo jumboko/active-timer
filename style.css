@@ -16,6 +16,7 @@ html{
   共通設定（背景・フォント・中央寄せ）
 ----------------------------- */
 body {
+  touch-action: manipulation; /* スクロールとズームのみ（ダブルタップでの拡大を無効化）※iOS Safariの300ms遅延回避のため */
   font-family: "Hiragino Maru Gothic ProN", sans-serif; /* 丸みのあるフォントで親しみやすさ */
   margin: 0 auto;          /* 外側の余白 body自体をhtmlの中央揃え */
   padding: 0 1em 2em 1em;  /* 内側の余白 */

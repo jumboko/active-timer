@@ -15,15 +15,15 @@ let timerInterval;              // リアルタイム表示用 setInterval の�
 let wakeLock = null;            // Wake Lock スリープ防止用
 
 // -----------------------------
-// 画面状態が表示または非表示に変更された場合に動作  タイマー画面が設定されている時のみ動作するよう変更する？？？？？？？？？？？？？？？？？？？？？
+// タイマー動作中に画面を再表示した場合にスリープ防止を再設定  ※タイマー画面遷移時に監視イベント設定
 // -----------------------------
-document.addEventListener("visibilitychange", () => {
+export function slpBlockTimerAct() {
   // 画面状態がvisible(画面再アクティブ)に変わり、startTimeがnullでない(タイマー動作中)場合
   if (document.visibilityState === "visible" && startTime) {
     disableWakeLock(); // 念のため既存のスリープ防止を解除
     enableWakeLock();  // スリープ防止を再設定
   }
-});
+}
 
 // -----------------------------
 // 経過時間（ms）を "0h00m00s00" 形式にフォーマット
@@ -59,7 +59,7 @@ function startTimer() {
      // 現在時刻からスタート時の時刻を引き経過時間を算出
      // 再開に備え過去の累積時間(elapsedTime※初回は0)と合算
     updateTimerDisplay(elapsedTime + (Date.now() - startTime));
-  }, 10); // 10msごとに更新(setIntervalで指定した間隔で関数を繰り返す)
+  }, 33); // 33ms約30fpsごとに更新(setIntervalで指定した間隔で関数を繰り返す)
 
     // ボタン表示制御
   setTimerBtn({stopBtn: 'inline-block'});
@@ -225,7 +225,7 @@ export function initProgressBar() {
  * @param {number} samples - サンプリング数（大きいほど精度↑、負荷↑）
  * @returns {number} - スクリーン座標の近似周囲長(px)
  */
-function getScreenPerimeter(path, samples = 500) {
+function getScreenPerimeter(path, samples = 200) {
   const total = path.getTotalLength();     // SVG内部座標での周囲
   const svg = path.ownerSVGElement;        // 所属する親の<svg>要素を取得(getElementByIdで直接取得と同じ)
   const pt = svg.createSVGPoint();         // 一時的に座標を保持するオブジェクト

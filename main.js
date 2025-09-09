@@ -6,7 +6,7 @@
 // インポート
 import { auth } from "./firebaseCore.js";
 import { getQueryData, addQueryData, updateQueryData, deleteQueryData } from './dbUtils.js';
-import { formatTime, resetTimer, setProgressBar, initProgressBar } from './timer.js';
+import { formatTime, resetTimer, slpBlockTimerAct, setProgressBar, initProgressBar } from './timer.js';
 import { mergeCheck } from './dataMerge.js';
 import { funcLock } from "./functionLock.js";
 
@@ -31,10 +31,12 @@ function showPage(id) {
   // タイマー画面に遷移
   if (id === 'timerPage') {
     window.addEventListener("resize", initProgressBar); // resize監視(タイマー画面進捗バー用)
+    document.addEventListener("visibilitychange", slpBlockTimerAct); // スリープ防止監視(タイマー画面測定中)
 
   // 現画面がtimerPageで別画面に遷移する場合
   } else if (currentPageId === 'timerPage' && id !== 'timerPage') {
     window.removeEventListener("resize", initProgressBar); // resize監視(タイマー画面進捗バー用)を解除
+    document.removeEventListener("visibilitychange", slpBlockTimerAct); // スリープ防止監視(タイマー画面測定中)を解除
     resetTimer();  // 測定キャンセル
   }
 
