@@ -9,7 +9,7 @@ import { getQueryData, addQueryData, updateQueryData, deleteQueryData } from './
 import { formatTime, resetTimer, slpBlockTimerAct, setProgressBar, initProgressBar } from './timer.js';
 import { mergeCheck } from './dataMerge.js';
 import { funcLock } from "./functionLock.js";
-
+import { createSortOptions, setSortSelector } from "./sortRecords.js";
 
 let currentPageId = "homePage";    // 現在表示されているページID
 export let currentActivity = null; // 現在選択されている活動
@@ -83,6 +83,9 @@ async function loadActivities() {
 
     actHisList.appendChild(li);
   });
+
+  // ソートプルダウンの項目を作成
+  createSortOptions();
 }
 
 // -----------------------------
@@ -189,9 +192,12 @@ async function showRecordListPage(highlightLast = false) {
     btn.style.display = "none"; // 非表示
   } else {
     btn.style.display = "inline-block"; // 表示
-    btn.dataset.mode = "time";   // タイムモードが初期表示
+    btn.dataset.mode = "time";   // 初期表示タイムモードに
     btn.textContent = "メモ表示";
   }
+
+  // ソートプルダウンを活動に合わせ選択
+  setSortSelector(currentOrder);
 
   document.getElementById('recordListTitle').innerHTML = `${currentActivity}の<ruby>記録<rt>きろく</rt></ruby>`; // 活動名を表示
   showPage('recordListPage');
@@ -449,26 +455,32 @@ async function deleteRecord(activity, target) {
     return; 
   }
 
-  await deleteQueryData("records", targetDoc.id); // 対象の記録をDB削除
+  // 対象の記録をDB削除
+  await deleteQueryData("records", targetDoc.id);
 
   // DOMから記録一覧リストを取得し削除する行を特定
   const list = document.getElementById('recordList');
   const targetLi = Array.from(list.children).find(li =>
     li.dataset.date === target.date && parseFloat(li.dataset.time) === target.time
   );
-
   // htmlのDOMの表示リストからDB削除した記録を取り除く
   if (targetLi) targetLi.remove();
 
-  // 記録一覧リストの中身をループし、DOMの残りのリストで順位を再計算して更新
-  list.querySelectorAll('li').forEach((li, index) => {
-    li.querySelector('.rank').textContent = `${index + 1}位`;    // 順位を再設定
+  // <li> 要素を配列に変換（NodeList → Array）
+  const recordItems = Array.from(list.querySelectorAll("li"));
+
+  // 配列をcurrentOrder基準で並べ替え
+  recordItems.sort((a, b) => 
+    currentOrder === "asc" ? a.dataset.time - b.dataset.time : b.dataset.time - a.dataset.time);
+
+  // ソート順に順位再計算　※表示上の並びは維持するためDOMは入れ替えない
+  recordItems.forEach((li, index) => {
+    li.querySelector(".rank").textContent = `${index + 1}位`;    // 順位を再設定
   });
 
   // 残り件数0の場合、タイム・メモ切替ボタンを非表示
-  const chngBtn = document.getElementById("chngRecViwBtn");
   if (list.children.length === 0) {
-    chngBtn.style.display = "none"; // 非表示
+    document.getElementById("chngRecViwBtn").style.display = "none";
   }
 }
 

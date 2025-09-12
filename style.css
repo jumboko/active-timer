@@ -154,7 +154,7 @@ body {
 ----------------------------- */
 button {
   font-size: 1.2em;            /* 文字サイズ */
-  margin: 0.5em 0.2em;         /* 外側の余白 */
+  margin: 0.5em 0.2em;         /* 外側の余白(上下|左右) */
   padding: 0.6em 1.2em;        /* 内側の余白 */
   border: none;                /* 枠線非表示 */
   border-radius: 12px;         /* 角を丸くする */
@@ -170,11 +170,11 @@ button:hover {
 }
 
 /* ----------------------------
-  テキストボックスの共通デザイン（全体に優しい見た目）
+  テキストボックス・プルダウンの共通デザイン（全体に優しい見た目）
 ----------------------------- */
 input[type="text"], select {
   font-size: 1.1em;           /* 文字サイズ */
-  margin: 0.5em 0.2em;        /* 外側の余白 */
+  margin: 0.5em 0;            /* 外側上下の余白(上下|左右) */
   padding: 0.5em;             /* 内側の余白 */
   border: 1px solid #ccc;   /* 枠線の書式設定(大きさ、タイプ、色)*/
   border-radius: 10px;        /* 角を丸くする */
@@ -186,6 +186,39 @@ input[type="text"], select {
 #recordOrderLabel {
   margin-left: 0.5em; /* 並び順の前に余白を追加 */
 }
+
+/* プルダウン用ボタンの設定 */
+.btn-select {
+  margin: 0em;             /* 外側の余白を上書き */
+  padding: 0.3em 1.2em;    /* 内側の余白を上書き */
+  vertical-align: top;     /* 行内での垂直方向の位置調整 */
+}
+
+/* ----------------------------
+  テキストエリアの共通デザイン（全体に優しい見た目）
+----------------------------- */
+textarea.commonArea {
+  margin: 0.5em 0;            /* 外側上下の余白(上下|左右) */
+  padding: 0.5em;             /* 内側の余白 */
+  width: 100%;                /* 横幅 */
+  box-sizing: border-box;     /* padding + borderを含めたwidthに */
+  font-size: 1em;             /* 文字サイズ */
+  border: 1px solid #ccc;   /* 枠線の書式設定(大きさ、タイプ、色)*/
+  border-radius: 10px;        /* 角を丸くする */
+  background-color: #fff;   /* 背景色 */
+  box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
+}
+
+/* ----------------------------
+  活動選択画面のレイアウト
+----------------------------- */
+.selectControls {
+  display: flex;        /* 横に並べる(配置自由化) */
+  align-items: center;  /* プルダウンとソートボタンを縦中央揃え */
+  gap: 0.3em;           /* プルダウンとボタンの間隔 */
+  flex-wrap: wrap;      /* 狭い場合は改行を許可 */
+}
+
 
 /* ================================
    タイマー画面のレイアウト全体
@@ -254,21 +287,13 @@ input[type="text"], select {
   font-size: 2.5em;                 /* 文字サイズ */
 }
 
-/* メモのテキストエリア */
+/* メモのテキストエリア（ベースからの修正） */
 #timerMemo {
   display: none;              /* 画面非表示 */
   position: absolute;         /* 基準値から自由に配置(timeWrapperに基準設定) */
   top: 100%;                  /* 要素の下側に */
   left: 0;                    /* 左端を合わせる */
-  margin-top: 0.25em;          /* 外側上部 */
-  padding: 0.5em;             /* 内側の余白 */
-  width: 100%;                /* 横幅 */
-  box-sizing: border-box;     /* padding + borderを含めたwidthに */
-  font-size: 1em;             /* 文字サイズ */
-  border: 1px solid #ccc;   /* 枠線の書式設定(大きさ、タイプ、色)*/
-  border-radius: 10px;        /* 角を丸くする */
-  background-color: #fff;   /* 背景色 */
-  box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
+  margin-top: 0.25em;         /* 外側上部 */
 }
 
 /* タイマー操作ボタン全体のコンテナ */
@@ -345,7 +370,7 @@ ul {
 
 /* 各項目のボックス化 */
 li {
-  margin: 0.5em 0;           /* 外側の余白 */
+  margin: 0.5em 0;           /* 外側上下の余白(上下|左右) */
   padding: 0.6em;            /* 内側の余白 */
   background: #ffffff;     /* 背景色 */
   border: 1px solid #ddd;  /* 枠線の書式設定(大きさ、タイプ、色)*/
@@ -400,6 +425,21 @@ li {
 
 /* 開発用 */
 /*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */
+}
+
+/* ----------------------------
+  活動毎の記録一覧のソートプルダウン配置
+----------------------------- */
+.recordListHeader {
+  display: flex;                  /* 横に並べる(配置自由化) */
+  align-items: center;            /* タイトルとソートコントロールを縦中央揃え */
+  justify-content: space-between; /* タイトルを左、ソートを右 */
+}
+
+.sortControls {
+  display: flex;        /* 横に並べる(配置自由化) */
+  align-items: center;  /* プルダウンとソートボタンを縦中央揃え */
+  gap: 0.3em;           /* プルダウンとボタンの間隔 */
 }
 
 /* ----------------------------
@@ -460,17 +500,9 @@ li {
 /*  border: 2px dashed red;       /* 枠線を点線で表示（エリアの境界を視覚化） */ 
 }
 
-/* メモのテキストエリア */
+/* メモのテキストエリア（ベースからの修正） */
 #detailMemo {
-  margin: 0.5em 0.2em;        /* 外側の余白 */
-  padding: 0.5em;             /* 内側の余白 */
-  width: 100%;                /* 横幅 */
-  box-sizing: border-box;     /* padding + borderを含めたwidthに */
   font-size: 1.1em;           /* 文字サイズ */
-  border: 1px solid #ccc;   /* 枠線の書式設定(大きさ、タイプ、色)*/
-  border-radius: 10px;        /* 角を丸くする */
-  background-color: #fff;   /* 背景色 */
-  box-shadow: 1px 1px 3px rgba(0,0,0,0.05); /* ほんのり影で立体感 */
 }
 
 #detailMemo[readonly] {
@@ -486,7 +518,7 @@ li {
   justify-content: space-between; /* 左右に分けて配置（リセットボタンを右端に配置） */
   align-items: center;            /* 垂直方向の中央揃え */
   flex-wrap: wrap;                /* 画面幅が狭いとき折り返し可 */
-  margin: 1em 0;                  /* 上下に余白 */
+  margin: 1em 0;                  /* 外側上下の余白(上下|左右) */
 
 /* 開発用 */
 /*  border: 2px dashed red;       /* 枠線を点線で表示（エリアの境界を視覚化） */
@@ -585,11 +617,6 @@ li {
     padding: 0em 0.4em 1.5em 0.4em;  /* 余白をぐっと減らす (上 | 右 | 下 | 左)*/
   }
 
-  /* padding が width に含まれるようになるため、要素が画面幅をはみ出しにくく */
-  * {
-    box-sizing: border-box;
-  }
-
   /* タイトル文字を縮小して横幅を確保 */
   #mainHeader #logoArea {
     font-size: 1.3em; 
@@ -605,12 +632,24 @@ li {
     padding: 0.5em 1em;
   }
 
+  input[type="text"], select {
+    font-size: 1em;           /* 文字サイズ */
+    padding: 0.4em;           /* 内側の余白 */
+  }
   /* 活動名登録テキストボックス */
   #newActivity{
-    width: 98%;  /* 横幅いっぱい※margin分ずれるため100にしない */
+    box-sizing: border-box; /* padding + borderを含めたwidthに */
+    width: 100%;            /* 横幅いっぱいに表示 */
   }
+
+   /* テキストエリア */
+  textarea.commonArea  {
+    font-size: 1em !important;  /* 文字サイズを強制上書き(id指定を変更するため) */
+    padding: 0.4em;             /* 内側の余白 */
+  }
+
   /* 昇順降順プルダウン */
   #recordOrder {
-  /*  height: 2.6em; /* テキストボックスと高さ揃える ??????????????????????????聞くか分からん、safariでは形式が異なる */
+  /*  height: 2.6em; /* テキストボックスと高さ揃える ??????????????????????????聞くか分からん、safariでは形式が異なる、効いてないね */
   }
 }

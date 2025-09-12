@@ -47,13 +47,15 @@
   <!-- 活動選択画面 -->
   <div id="actSelectPage" class="page">
     <h2><ruby>活動<rt>かつどう</rt></ruby>を<ruby>選択<rt>せんたく</rt></ruby></h2>
-    <input type="text" id="newActivity" maxlength="20" placeholder="新しい活動名"/>
-    <label id="recordOrderLabel" for="recordOrder">並び順 ：</label>
-      <select id="recordOrder">
-        <option value="asc" selected>最短記録順</option>
-        <option value="desc">最長記録順</option>
-      </select>
-    <button class="btn-add" onclick="addActivityBL()"><ruby>追加<rt>ついか</rt></ruby></button>
+    <div class="selectControls">
+      <input type="text" id="newActivity" maxlength="20" placeholder="新しい活動名"/>
+      <label id="recordOrderLabel" for="recordOrder">並び順 ：</label>
+        <select id="recordOrder">
+          <option value="asc" selected>最短記録順</option>
+          <option value="desc">最長記録順</option>
+        </select>
+      <button class="btn-select" onclick="addActivityBL()"><ruby>追加<rt>ついか</rt></ruby></button>
+    </div>
     <ul id="actSelectList"></ul>
     <button class="btn-nav" onclick="showPage('homePage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
   </div>
@@ -91,7 +93,7 @@
                   stroke-dasharray="0 0" stroke-dashoffset="0"/>
           </svg>
           <p id="timeDisplay">0h00m00s<small>00</small></p>
-          <textarea id="timerMemo" rows="1" maxlength="100" placeholder="メモ（最大100文字）"></textarea>
+          <textarea class="commonArea" id="timerMemo" rows="1" maxlength="100" placeholder="メモ（最大100文字）"></textarea>
         </div>
         <div id="timerControls">
           <div class="control-left">
@@ -126,7 +128,13 @@
 
   <!-- 活動毎の記録一覧 -->
   <div id="recordListPage" class="page">
-    <h2 id="recordListTitle">活動名の記録</h2>
+    <div class="recordListHeader">
+      <h2 id="recordListTitle">活動名の記録</h2>
+      <div class="sortControls">
+        <select id="sortSelector"></select>
+        <button class="btn-select" onclick="sortRecords()">ソート</button>
+      </div>
+    </div>
     <ul id="recordList"></ul>
     <div class="recordBtnControls">
       <button class="btn-nav" onclick="showPage('actHistoryPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
@@ -144,7 +152,7 @@
       <p><strong><ruby>記録<rt>きろく</rt></ruby>：</strong><span id="detailTime"></span></p>
     </div>
     <label for="detailMemo"><strong>メモ（最大100文字）：</strong></label>
-    <textarea id="detailMemo" rows="5" maxlength="100" readonly></textarea>
+    <textarea class="commonArea" id="detailMemo" rows="5" maxlength="100" readonly></textarea>
     <div id="memoControls">
       <div id="memoLeftButton">
         <button class="btn-nav" onclick="showPage('recordListPage')">← <ruby>戻<rt>もど</rt></ruby>る</button>
@@ -170,7 +178,7 @@
     </div>
   </div>
 
-  <!-- js 最後に書くことでhtmlの読み込みを優先(グローバルボタン読み込み) -->
+  <!-- js 最後に書くことでhtmlの読み込みを優先(グローバルボタン読み込み)※mainにインポートしたクラスは不要 -->
   <script type="module" src="./main.js"></script>
   <script type="module" src="./authHandler.js"></script>
 </body>
