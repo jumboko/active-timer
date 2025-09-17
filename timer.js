@@ -118,7 +118,8 @@ export function resetTimer() {
   progStopFlg = false;   // 進捗バーの更新停止解除
   updateTimerDisplay(0); // 画面表示を0にリセット
   
-  document.getElementById("timerMemo").value = "";// メモをクリア
+  if (timerMsg) timerMsg.textContent = "";         // タイマーメッセージをクリア
+  document.getElementById("timerMemo").value = ""; // メモをクリア
 
   // ボタン表示制御：初期状態に戻す
   setTimerBtn({startBtn: 'inline-block'});
@@ -182,21 +183,26 @@ async function disableWakeLock() {
 }
 
 // 進捗バー制御用の変数 
-let rect = null;         // 進捗バーのSVGパス要素
-let perimeter = 0;       // 周囲長（px）
-let topRecordTime = 0;   // 全体の制限時間（秒）
-let progress = 0;        // 進捗割合（0～1）
-let progStopFlg = false; // 進捗1でバーを赤にした後停止させるフラグ
+let rect = null;          // 進捗バーのSVGパス要素
+let perimeter = 0;        // 周囲長（px）
+let topRecordTime = 0;    // 全体の制限時間（秒）
+let progress = 0;         // 進捗割合（0～1）
+let progStopFlg = false;  // 進捗1でバーを赤にした後停止させるフラグ
+let isAsc = true;         // 記録の並び順が昇順かのフラグ
+let timerMsg = null;      // トップタイム更新時のメッセージ
 
 // -----------------------------
 // 進捗バーと変数を初期化
 /**-----------------------------
  * @param {number} sec - 完走にかける時間（秒）
+ * @param {string} order - 並び順
  */
-export function setProgressBar(sec) {
-  initProgressBar();   // 進捗バーの初期化
-  topRecordTime = sec; // 制限時間を保存
-  progress = 0;        // 初期化
+export function setProgressBar(sec, order) {
+  initProgressBar();       // 進捗バーの初期化
+  topRecordTime = sec;     // 制限時間を保存
+  progress = 0;            // 初期化
+  isAsc = order === 'asc'; // 昇順か確認
+  if (!timerMsg) timerMsg = document.getElementById('timerMessage'); // メッセージ要素取得
 
 //console.log("✅ setTopRecordTime 実行:", {topRecordTime});
 }
@@ -276,8 +282,14 @@ function updateProgress(ms) {
     rect.style.stroke = "#4caf50"; // 緑色で進捗バー更新
   // 制限時間を超えた場合
   } else {
-    rect.style.stroke = "red";       // 赤色で進捗バー更新
-    progStopFlg = true;              // フラグを立てて更新停止
+    const color = isAsc ? 'red' : 'aqua';               // 色を指定
+    const text  = isAsc ? 'TIME UP!!' : 'NEW RECORD!!'; // メッセージ指定
+    
+    rect.style.stroke = color;    // 進捗バーを指定色で更新
+    timerMsg.style.color = color; // タイマーメッセージを指定色で更新
+    timerMsg.textContent = text;  // タイマーメッセージの内容を更新
+
+    progStopFlg = true;   // フラグを立てて更新停止
   }
 
 //console.log("⏱ updateProgress:", {elapsedSec,topRecordTime,progress, dashoffset: rect.style.strokeDashoffset});

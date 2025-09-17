@@ -174,7 +174,7 @@ button:hover {
 ----------------------------- */
 input[type="text"], select {
   font-size: 1.1em;           /* 文字サイズ */
-  margin: 0.5em 0;            /* 外側上下の余白(上下|左右) */
+  margin: 0;                  /* 外側の余白 */
   padding: 0.5em;             /* 内側の余白 */
   border: 1px solid #ccc;   /* 枠線の書式設定(大きさ、タイプ、色)*/
   border-radius: 10px;        /* 角を丸くする */
@@ -216,9 +216,9 @@ textarea.commonArea {
   display: flex;        /* 横に並べる(配置自由化) */
   align-items: center;  /* プルダウンとソートボタンを縦中央揃え */
   gap: 0.3em;           /* プルダウンとボタンの間隔 */
+  margin-bottom: 1em;   /* 外側上下の余白(上下|左右) */
   flex-wrap: wrap;      /* 狭い場合は改行を許可 */
 }
-
 
 /* ================================
    タイマー画面のレイアウト全体
@@ -279,12 +279,22 @@ textarea.commonArea {
 /* タイマーの数字表示 */
 #timeDisplay {
   position: absolute;               /* 基準値から自由に配置(timeWrapperに基準設定) */
-  top: 50%;                         /* 要素内の位置を中央に */
-  left: 50%;                        /* 要素内の位置を中央に */
+  top: 50%;                         /* 要素内の垂直位置を中央に */
+  left: 50%;                        /* 要素内の水平位置を中央に */
   transform: translate(-50%, -50%); /* 要素の中心を親の中央に揃える */
   margin: 0;                        /* 外側の余白 */
   padding: 0;                       /* 内側の余白 */
   font-size: 2.5em;                 /* 文字サイズ */
+}
+
+/* タイマー記録更新時のメッセージ */
+#timerMessage {
+  position: absolute;               /* 基準値から自由に配置(timeWrapperに基準設定) */
+  top: 20%;                         /* 要素内の垂直位置を上部に */
+  left: 50%;                        /* 要素内の水平位置を中央に */
+  transform: translate(-50%, -50%); /* 要素の中心を親の中央に揃える */
+  font-size: 1.5em;                 /* 文字サイズ */
+  font-weight: bold;                /* 文字を太字 */
 }
 
 /* メモのテキストエリア（ベースからの修正） */
@@ -332,13 +342,12 @@ textarea.commonArea {
 
 /* 上位記録のリスト */
 #topTimesList {
-  margin: 0em;            /* 高さ統一のため外側の余白を削除 */
   min-height: 10.25em;    /* リスト3件分の高さを確保しボタン位置を保つ */
 }
 
 /* 画面移動のボタン全体のコンテナ */
 #timerBackControls {
-  margin-top: 1.1em;        /* 外側上部に余白(タイマーのボタンと揃うよう調整) */
+  margin-top: 0.1em;        /* 外側上部に余白(タイマーのボタンと揃うよう調整) */
 
 /* 開発用 */
 /*  border: 2px dashed red;  /* 枠線を点線で表示（エリアの境界を視覚化） */
@@ -364,13 +373,17 @@ textarea.commonArea {
   活動一覧等のリスト表示
 ----------------------------- */
 ul {
-  list-style: none; /* リストの先頭の点（●）を非表示 */
-  padding: 0;       /* 内側の余白0 */
+  display: flex;          /* 横並びにする（Flexbox）  */
+  flex-direction: column; /* フレックス化したアイテムを縦並びにする */
+  gap: 0.5em;             /* ★ 要素間のすき間（外側） */
+  list-style: none;       /* リストの先頭の点（●）を非表示 */
+  padding: 0;             /* 内側の余白0 */
+  margin: 0 0 1em 0;      /* 外側の余白：(上 | 右 | 下 | 左) */
 }
 
 /* 各項目のボックス化 */
 li {
-  margin: 0.5em 0;           /* 外側上下の余白(上下|左右) */
+  margin: 0;                 /* 外側の余白 */
   padding: 0.6em;            /* 内側の余白 */
   background: #ffffff;     /* 背景色 */
   border: 1px solid #ddd;  /* 枠線の書式設定(大きさ、タイプ、色)*/
@@ -434,12 +447,22 @@ li {
   display: flex;                  /* 横に並べる(配置自由化) */
   align-items: center;            /* タイトルとソートコントロールを縦中央揃え */
   justify-content: space-between; /* タイトルを左、ソートを右 */
+  flex-wrap: wrap;                /* 狭い場合は改行を許可 */
+
+/* 開発用 */
+/*  border: 2px dashed green;    /* 枠線を点線で表示（エリアの境界を視覚化） */
 }
 
 .sortControls {
   display: flex;        /* 横に並べる(配置自由化) */
   align-items: center;  /* プルダウンとソートボタンを縦中央揃え */
+  margin-left: auto;    /* 余白を自動で埋める → 常に右寄せ */
   gap: 0.3em;           /* プルダウンとボタンの間隔 */
+}
+
+#sortBtn:disabled {
+  opacity: 0.5;        /* 半透明にして分かりやすく */
+  cursor: not-allowed; /* ホバー時に禁止マーク */
 }
 
 /* ----------------------------
@@ -633,7 +656,7 @@ li {
   }
 
   input[type="text"], select {
-    font-size: 1em;           /* 文字サイズ */
+    font-size: 16px;          /* 文字サイズ(iOS Safariの入力時の自動ズーム回避のため直接指定) */
     padding: 0.4em;           /* 内側の余白 */
   }
   /* 活動名登録テキストボックス */
@@ -644,8 +667,8 @@ li {
 
    /* テキストエリア */
   textarea.commonArea  {
-    font-size: 1em !important;  /* 文字サイズを強制上書き(id指定を変更するため) */
-    padding: 0.4em;             /* 内側の余白 */
+    font-size: 16px !important;  /* 文字サイズ(iOS Safariの入力時の自動ズーム回避のため直接指定)を強制上書き(id指定を変更するため) */
+    padding: 0.3em;              /* 内側の余白 ※タイマー画面でボタンと重ならないよう小さめに */
   }
 
   /* 昇順降順プルダウン */

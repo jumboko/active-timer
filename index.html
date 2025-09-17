@@ -92,6 +92,7 @@
                   stroke-linecap="butt"
                   stroke-dasharray="0 0" stroke-dashoffset="0"/>
           </svg>
+          <div id="timerMessage"></div>
           <p id="timeDisplay">0h00m00s<small>00</small></p>
           <textarea class="commonArea" id="timerMemo" rows="1" maxlength="100" placeholder="メモ（最大100文字）"></textarea>
         </div>
@@ -132,7 +133,7 @@
       <h2 id="recordListTitle">活動名の記録</h2>
       <div class="sortControls">
         <select id="sortSelector"></select>
-        <button class="btn-select" onclick="sortRecords()">ソート</button>
+        <button class="btn-select" id="sortBtn" onclick="sortRecords()">ソート</button>
       </div>
     </div>
     <ul id="recordList"></ul>

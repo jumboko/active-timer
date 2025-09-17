@@ -133,7 +133,7 @@ async function showTimerPage() {
   document.getElementById('timerTitle').textContent = `${currentActivity}のタイマー`; // 活動名を表示
   showPage('timerPage');
 
-  setProgressBar(records[0]?.time); // 進捗バーの設定のため1位の記録を渡す(記録なし=undefined)※showPageの後に書く
+  setProgressBar(records[0]?.time, currentOrder); // 進捗バーの設定のため1位の記録と並び順を渡す(記録なし=undefined)※showPageの後に書く
 }
 
 // -----------------------------
