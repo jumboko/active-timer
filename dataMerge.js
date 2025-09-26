@@ -97,7 +97,7 @@ export async function mergeUserData(inputActivities, inputRecords, currentActNam
 
     // 登録をスキップしない場合（重複なし、または重複分を分ける選択の場合）※マージする場合で活動名重複時のみスキップ
     if (!dupActNames.includes(setActName)) {
-      // 名称の重複回避のため活動名を更新
+      // 名称の重複回避のため活動名を更新(重複分を分ける選択をし重複した場合に更新)
        setActName = getUniqueName(inputAct.actName, currentActNames);
 
       // 活動を追加(纏めてPromise.all) ...inputAct=取得情報のまま展開、setActName=上書き(重複回避で更新の可能性有)、currentUid=現在ユーザで上書き
@@ -111,7 +111,7 @@ export async function mergeUserData(inputActivities, inputRecords, currentActNam
     const inputActRecs = inputRecords.filter(r => r.actName=== inputAct.actName);
     // 記録一覧を1件ずつ処理(活動名重複を分けない場合もそのまま登録)
     for (const inputRec of inputActRecs) {
-      // 既存レコード一覧マップから重複する記録を取得
+      // 既存レコード一覧マップから重複する記録を取得(重複分を分ける選択をし重複で活動名を更新した場合は登録対象のためsetActNameをキーにし不一致に)
       const dupRec = currentRecMap.get(`${setActName}|${inputRec.date}|${inputRec.time}`);
 
       // 重複がない場合

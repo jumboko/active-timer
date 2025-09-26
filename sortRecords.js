@@ -46,6 +46,8 @@ export function setSortSelector(currentOrder) {
 
   // ソートボタンの初期表示は非活性
   sortButton.disabled = true;
+  // activeOrderに活動のソート内容を設定
+  activeOrder = "time-"+currentOrder;
 
   // currentOrder に合わせて選択 ※currentOrder は "asc" or "desc" で保存されている前提
   if (currentOrder === "asc") {
